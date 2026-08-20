@@ -1,0 +1,23 @@
+schema_version: 1
+id: "TIM-001"
+occurred_at: "2026-04-02T10:25:00+02:00"
+recorded_at: "2026-04-02T10:40:00+02:00"
+title: "Clock Offset Correlation Found"
+summary: "Clock-domain offset predicted every observed inversion."
+branch_id: "BR-TIMING"
+parents:
+  - "CORE-004"
+status: "accepted"
+relations:
+  - type: "related_to"
+    target: "CORE-003"
+    explanation: "Executor load covaried with the unrecorded source clock offset in the earlier experiment."
+details:
+  context: "The timing branch recorded source clock domains alongside executor load."
+  hypotheses:
+    - "Mixed source clock domains cause queue inversion before processing begins."
+  results:
+    - "Clock offset predicted all twelve inversions; executor load did not after controlling for offset."
+  next_step: "Normalize timestamps at ingestion."
+evidence:
+  - "EVD-0005"

@@ -1,0 +1,4 @@
+schema_version: 1
+id: "BR-EXECUTOR"
+title: "Executor workaround"
+description: "Rejected and abandoned attempts to solve the regression through scheduling."

@@ -1,0 +1,23 @@
+schema_version: 1
+id: "CORE-003"
+occurred_at: "2025-12-15T16:40:00+01:00"
+recorded_at: "2025-12-15T17:00:00+01:00"
+title: "Executor Hypothesis Accepted"
+summary: "Available profiling evidence supported executor pressure as the root cause."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-002"
+status: "accepted"
+details:
+  context: "Queue inversions correlated with high executor load in the first experiments."
+  hypotheses:
+    - "Executor scheduling jitter is the primary cause of timestamp inversion."
+  acceptance_criteria:
+    - "Executor load correlates with inversion frequency in the available capture."
+  results:
+    - "The initial profile showed a strong correlation."
+  known_limitations:
+    - "Clock-domain metadata was not recorded in the profile."
+  next_step: "Apply scheduler isolation and repeat the replay."
+evidence:
+  - "EVD-0002"

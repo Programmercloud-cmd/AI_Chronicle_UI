@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0014"
+captured_at: "2026-06-10T16:20:00+02:00"
+kind: "critic_report"
+title: "Final causal conclusion acceptance"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/final-critic.txt"
+  media_type: "text/plain"
+  sha256: "eedb75f6286d54c7d56c35a28d580c89a76f9a80dfa598babdd766a5f9bc403a"

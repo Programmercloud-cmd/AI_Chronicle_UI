@@ -1,0 +1,19 @@
+schema_version: 1
+id: "CORE-004"
+occurred_at: "2026-03-01T10:12:00+01:00"
+recorded_at: "2026-03-01T10:30:00+01:00"
+title: "Regression Reproduced Under Isolation"
+summary: "Timestamp inversion persisted even with isolated executor resources."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-003"
+status: "informational"
+details:
+  context: "The accepted executor hypothesis did not explain the isolated replay."
+  hypotheses:
+    - "A second factor may be interacting with executor load."
+  results:
+    - "4/4 isolated replays still inverted timestamps."
+  next_step: "Investigate scheduling, timing, and registration independently."
+evidence:
+  - "EVD-0003"

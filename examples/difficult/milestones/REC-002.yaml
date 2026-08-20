@@ -1,0 +1,24 @@
+schema_version: 1
+id: "REC-002"
+occurred_at: "2026-05-15T14:25:00+02:00"
+recorded_at: "2026-05-15T14:45:00+02:00"
+title: "Recovery Merge Accepted"
+summary: "The timing repair and reverted mainline merged under explicit recovery ownership."
+branch_id: "BR-RECOVERY"
+parents:
+  - "REC-001"
+  - "CORE-005"
+status: "accepted"
+details:
+  context: "The first parent preserves recovery-branch continuation; the second records incoming mainline ancestry."
+  changed:
+    - "Combined normalized timing with the restored mainline baseline."
+  unchanged:
+    - "Incoming parent branch ownership did not transfer."
+  acceptance_criteria:
+    - "Merge topology and replay behavior are deterministic."
+  results:
+    - "Integration replay and topology checks passed."
+  next_step: "Run the decisive causal experiment."
+evidence:
+  - "EVD-0012"

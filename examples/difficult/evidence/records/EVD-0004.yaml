@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0004"
+captured_at: "2026-03-10T09:30:00+01:00"
+kind: "critic_report"
+title: "Executor-path rejection"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/executor-critic.txt"
+  media_type: "text/plain"
+  sha256: "674e13891ab84180f288b320ad7fe64c27b4d567cf0060a611e2fe7649ac04b8"

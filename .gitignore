@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local Codex gauntlet infrastructure (manually backed up; never committed)
+/AGENTS.md
+/dev/
+
+# Project Chronicle build and dependency output
+/node_modules/
+/dist/
+/coverage/
+/test-results/
+/playwright-report/
+/.npm-cache/
+
+# Sample evidence is product test data, including deliberately captured logs.
+!/examples/**/evidence/artifacts/**/*.log

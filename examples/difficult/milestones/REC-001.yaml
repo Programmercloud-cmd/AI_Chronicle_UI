@@ -1,0 +1,19 @@
+schema_version: 1
+id: "REC-001"
+occurred_at: "2026-05-10T11:00:00+02:00"
+recorded_at: "2026-05-10T11:15:00+02:00"
+title: "Recovery Integration Started"
+summary: "A recovery branch began from the accepted timing repair."
+branch_id: "BR-RECOVERY"
+parents:
+  - "TIM-002"
+status: "accepted"
+details:
+  context: "The recovery path combined accepted evidence rather than reviving abandoned approaches."
+  acceptance_criteria:
+    - "The timing repair applies without modifying registration behavior."
+  results:
+    - "The repair applied cleanly to the recovery workspace."
+  next_step: "Merge the reverted mainline state."
+evidence:
+  - "EVD-0007"

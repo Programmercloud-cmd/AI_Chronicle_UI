@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0002"
+captured_at: "2026-04-12T11:08:33+02:00"
+kind: "test_output"
+title: "Baseline replay results"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/baseline-results.txt"
+  media_type: "text/plain"
+  sha256: "2b638b70026f2061fa1226f514e064c24328ec0d7994bf214bb1ac8f3a12229c"
+origin:
+  tool: "canonical replay harness"
+  command: "replay --dataset canonical-v1 --runs 5"

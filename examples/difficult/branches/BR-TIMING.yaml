@@ -1,0 +1,4 @@
+schema_version: 1
+id: "BR-TIMING"
+title: "Clock-domain investigation"
+description: "Root-cause work that produced the timestamp normalization patch."

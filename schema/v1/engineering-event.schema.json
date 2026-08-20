@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/engineering-event.schema.json",
+  "title": "EngineeringEventRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "occurred_at", "recorded_at", "kind", "actor", "outcome", "summary"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "id": { "$ref": "./common.schema.json#/$defs/engineeringEventId" },
+    "occurred_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "recorded_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "milestone_id": { "$ref": "./common.schema.json#/$defs/milestoneId" },
+    "kind": { "enum": ["implementation", "test", "review", "investigation", "decision", "integration", "roadmap_change"] },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["human", "agent", "tool"] },
+        "role": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "outcome": { "enum": ["completed", "passed", "failed", "accept", "reject", "informational"] },
+    "summary": { "type": "string" },
+    "details": { "type": "string" },
+    "evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./common.schema.json#/$defs/evidenceId" }
+    }
+  }
+}

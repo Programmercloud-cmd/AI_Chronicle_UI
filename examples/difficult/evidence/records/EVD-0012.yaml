@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0012"
+captured_at: "2026-05-15T14:24:00+02:00"
+kind: "test_output"
+title: "Recovery integration report"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/recovery-integration.txt"
+  media_type: "text/plain"
+  sha256: "0739355e2e11a1d3c2199d12b88853223a00b046fec03868a5280c77f5c49bf9"

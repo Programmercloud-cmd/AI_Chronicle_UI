@@ -1,0 +1,21 @@
+schema_version: 1
+id: "CORE-001"
+occurred_at: "2025-01-10T09:00:00+01:00"
+recorded_at: "2025-01-10T09:20:00+01:00"
+title: "Initial Replay Architecture"
+summary: "A deterministic ingest, queue, and replay path became operational."
+branch_id: "BR-MAIN"
+parents: []
+status: "accepted"
+details:
+  context: "The project needed a reproducible baseline before performance work."
+  changed:
+    - "Established the sample envelope and timestamp queue."
+    - "Added deterministic replay input ordering."
+  acceptance_criteria:
+    - "A fixed capture replays with identical output."
+  results:
+    - "The initial replay completed successfully."
+  next_step: "Capture a repeatable baseline."
+evidence:
+  - "EVD-0001"

@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0006"
+captured_at: "2026-04-26T13:34:40+02:00"
+kind: "experiment_report"
+title: "Clock-domain correlation experiment"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/root-cause.csv"
+  media_type: "text/csv"
+  sha256: "f298681cb7a3e1069f87775c30fc64f8658468919319fde4debb644c71b8599e"
+origin:
+  tool: "fault-injection harness"
+  command: "experiment --vary executor-load,source-offset"

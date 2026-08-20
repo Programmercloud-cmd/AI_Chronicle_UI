@@ -1,0 +1,75 @@
+schema_version: 1
+updated_at: "2026-06-12T10:30:00+02:00"
+items:
+  - id: "RM-001"
+    title: "Capture deterministic baseline"
+    status: "completed"
+    order: 10
+    acceptance_criteria:
+      - "Three baseline replays produce identical results."
+    related_milestones:
+      - "CORE-002"
+  - id: "RM-002"
+    title: "Tune executor scheduling"
+    status: "superseded"
+    order: 20
+    acceptance_criteria:
+      - "Queue inversions disappear under high executor load."
+    related_milestones:
+      - "EXEC-001"
+      - "EXEC-002"
+    superseded_by: "RM-003"
+  - id: "RM-003"
+    title: "Cross-platform Timing Benchmark"
+    status: "active"
+    order: 30
+    follows:
+      type: "milestone"
+      id: "REC-003"
+    branch_id: "BR-RECOVERY"
+    acceptance_criteria:
+      - "Linux and macOS runs remain within the drift and latency budgets."
+    related_milestones:
+      - "REC-003"
+    planned_for: "2026-07-05"
+  - id: "RM-004"
+    title: "Integration Validation"
+    status: "blocked"
+    order: 40
+    follows:
+      type: "roadmap"
+      id: "RM-003"
+    branch_id: "BR-RECOVERY"
+    acceptance_criteria:
+      - "Replay, live-input, and recovery suites pass together."
+    blocker_summary: "Cross-platform benchmark acceptance is pending."
+    blocked_by:
+      - type: "roadmap"
+        id: "RM-003"
+    planned_for: "2026-07-20"
+  - id: "RM-005"
+    title: "Release Candidate"
+    status: "pending"
+    order: 50
+    follows:
+      type: "roadmap"
+      id: "RM-004"
+    branch_id: "BR-RECOVERY"
+    acceptance_criteria:
+      - "Release candidate includes evidence links and rollback instructions."
+    planned_for: "2026-08-10"
+  - id: "RM-006"
+    title: "Hardware Certification"
+    status: "blocked"
+    order: 60
+    acceptance_criteria:
+      - "The external laboratory signs the timing conformance report."
+    blocker_summary: "The external laboratory has not assigned a test slot."
+  - id: "RM-007"
+    title: "Deploy Executor Workaround"
+    status: "abandoned"
+    order: 70
+    acceptance_criteria:
+      - "Executor tuning eliminates replay inversions."
+    related_milestones:
+      - "EXEC-002"

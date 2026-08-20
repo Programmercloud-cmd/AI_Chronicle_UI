@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0005"
+captured_at: "2026-04-24T10:20:00+02:00"
+kind: "critic_report"
+title: "First-fix critic rejection"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/first-fix-critic.txt"
+  media_type: "text/plain"
+  sha256: "8d33ee623f9c7ebe48c42387197369d90025c082cb4c92835fd836a0a34baa2a"

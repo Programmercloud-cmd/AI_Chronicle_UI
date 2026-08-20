@@ -1,0 +1,14 @@
+schema_version: 1
+id: "EVT-000003"
+occurred_at: "2026-04-30T14:00:00+02:00"
+recorded_at: "2026-04-30T14:04:00+02:00"
+milestone_id: "TIM-003"
+kind: "implementation"
+actor:
+  type: "agent"
+  role: "developer"
+  label: "developer iteration 2"
+outcome: "completed"
+summary: "Covered positive and negative clock offsets."
+evidence:
+  - "EVD-0007"

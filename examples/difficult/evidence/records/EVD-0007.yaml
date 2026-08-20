@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVD-0007"
+captured_at: "2026-04-12T15:42:00+02:00"
+kind: "diff"
+title: "Validated timestamp queue patch"
+description: "Substantial exact patch that applies to the included sample base."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/diffs/TIM-002.patch"
+  media_type: "text/x-diff"
+  sha256: "154d5e1f244325b025c493993e0b274cb3df29b4abd29886141be67008cab045"
+origin:
+  tool: "git"
+  command: "git diff -- evidence/artifacts/sample-base/src/timestamp_queue.py"
+  base_revision: "3333333333333333333333333333333333333333"
+  target_revision: "4444444444444444444444444444444444444444"

@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000006"
+occurred_at: "2026-04-12T15:40:00+02:00"
+recorded_at: "2026-04-12T15:43:00+02:00"
+milestone_id: "TIM-002"
+kind: "test"
+actor:
+  type: "tool"
+  label: "normalization acceptance suite"
+outcome: "passed"
+summary: "Validation, duplicate, permutation, and replay tests passed."
+evidence:
+  - "EVD-0006"

@@ -1,0 +1,5 @@
+Critic result: REJECT
+
+The fixed queue delay lowers the reproduction rate but adds 250 ms latency and
+does not establish why raw timestamps invert. Remove the timing-dependent delay,
+instrument clock provenance, and test mixed clock domains directly.

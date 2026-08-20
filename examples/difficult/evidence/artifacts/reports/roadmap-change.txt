@@ -1,0 +1,5 @@
+Roadmap decision
+
+The scheduler-tuning plan was superseded by cross-platform timing validation.
+The external hardware certification blocker remains outside Chronicle and is
+therefore recorded without a fabricated milestone or roadmap dependency.

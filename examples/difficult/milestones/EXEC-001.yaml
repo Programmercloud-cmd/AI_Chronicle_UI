@@ -1,0 +1,23 @@
+schema_version: 1
+id: "EXEC-001"
+occurred_at: "2026-03-05T14:20:00+01:00"
+recorded_at: "2026-03-05T14:45:00+01:00"
+title: "Scheduler Isolation Rejected"
+summary: "A dedicated executor did not eliminate inversions and exceeded CPU budget."
+branch_id: "BR-EXECUTOR"
+parents:
+  - "CORE-004"
+status: "rejected"
+details:
+  context: "This branch pursued the accepted executor-pressure hypothesis directly."
+  changed:
+    - "Moved ingestion to a dedicated high-priority executor."
+  unchanged:
+    - "Timestamp comparison and source clock metadata were unchanged."
+  acceptance_criteria:
+    - "No inversion occurs and CPU overhead stays below five percent."
+  results:
+    - "Inversions persisted and CPU overhead reached eighteen percent."
+  next_step: "Try bounded scheduling changes before abandoning the branch."
+evidence:
+  - "EVD-0004"

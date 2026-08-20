@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVD-0008"
+captured_at: "2026-04-28T15:41:00+02:00"
+kind: "diff"
+title: "Timestamp normalization patch"
+description: "The exact patch applied to the included sample base."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/diffs/TIM-002.patch"
+  media_type: "text/x-diff"
+  sha256: "f7bb83545e08998beef7c5742e69d5b691df10a74899e12cde2c22763505cb88"
+origin:
+  tool: "git"
+  command: "git diff -- evidence/artifacts/sample-base/src/timestamp_queue.py"
+  base_revision: "1111111111111111111111111111111111111111"
+  target_revision: "2222222222222222222222222222222222222222"

@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000004"
+occurred_at: "2026-04-09T10:20:00+02:00"
+recorded_at: "2026-04-09T10:25:00+02:00"
+milestone_id: "TIM-002"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 2"
+outcome: "reject"
+summary: "Rejected nondeterministic ties and missing duplicate-sequence coverage."
+details: "Define a stable ordering key and test every arrival permutation."

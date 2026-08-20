@@ -1,0 +1,24 @@
+schema_version: 1
+id: "REG-001"
+occurred_at: "2026-03-20T13:05:00+01:00"
+recorded_at: "2026-03-20T13:20:00+01:00"
+title: "Registration Degeneracy Suspected"
+summary: "A later investigation branched from the older accepted baseline."
+branch_id: "BR-REGISTRATION"
+parents:
+  - "CORE-002"
+status: "accepted"
+details:
+  context: "The team revisited the state before the executor hypothesis was adopted."
+  hypotheses:
+    - "Geometric degeneracy may cause apparent timing discontinuities."
+  acceptance_criteria:
+    - "Degenerate scenes correlate with replay discontinuity."
+  results:
+    - "A small initial sample showed correlation."
+  known_limitations:
+    - "The sample did not control clock-domain offsets."
+  next_step: "Tune registration thresholds and rerun the capture."
+evidence:
+  - "EVD-0010"
+  - "EVD-0011"

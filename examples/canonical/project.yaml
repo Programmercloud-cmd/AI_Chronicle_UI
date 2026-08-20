@@ -1,0 +1,7 @@
+schema_version: 1
+project:
+  id: "canonical-mock"
+  title: "Canonical Chronicle Mock"
+  description: "Synthetic two-branch history matching the canonical History visual reference."
+display:
+  timezone: "Europe/Paris"

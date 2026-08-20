@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVT-000007"
+occurred_at: "2026-04-12T15:50:00+02:00"
+recorded_at: "2026-04-12T15:55:00+02:00"
+milestone_id: "TIM-002"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 3"
+outcome: "accept"
+summary: "Accepted the third implementation with test and diff evidence."
+evidence:
+  - "EVD-0006"
+  - "EVD-0007"
+  - "EVD-0008"

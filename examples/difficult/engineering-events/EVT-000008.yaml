@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000008"
+occurred_at: "2026-06-12T10:25:00+02:00"
+recorded_at: "2026-06-12T10:27:00+02:00"
+kind: "roadmap_change"
+actor:
+  type: "human"
+  label: "project owner"
+outcome: "completed"
+summary: "Superseded scheduler tuning with cross-platform timing validation."
+details: "The external certification blocker remains unlinked because no Chronicle record represents the laboratory."
+evidence:
+  - "EVD-0015"

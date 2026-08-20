@@ -1,0 +1,23 @@
+schema_version: 1
+id: "TIM-001"
+occurred_at: "2026-04-26T13:35:09+02:00"
+recorded_at: "2026-04-26T13:50:00+02:00"
+title: "Root Cause Found"
+summary: "Instrumentation isolated a source clock-domain mismatch."
+branch_id: "BR-TIMING"
+parents:
+  - "CORE-003"
+status: "accepted"
+relations:
+  - type: "disproves"
+    target: "CORE-003"
+    explanation: "Executor load changed latency but did not predict the inversion; mixed clock domains did."
+details:
+  context: "The alternative branch investigated timestamp provenance instead of queue delay."
+  hypotheses:
+    - "Sensor sources used different clock-domain offsets."
+  results:
+    - "The measured offset exactly matched every observed inversion."
+  next_step: "Normalize timestamps before queue insertion."
+evidence:
+  - "EVD-0006"

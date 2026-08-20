@@ -1,0 +1,20 @@
+schema_version: 1
+id: "TIM-003"
+occurred_at: "2026-05-02T09:18:07+02:00"
+recorded_at: "2026-05-02T09:25:00+02:00"
+title: "Validation Passed"
+summary: "The accepted repair passed replay after two critic rejections."
+branch_id: "BR-TIMING"
+parents:
+  - "TIM-002"
+status: "accepted"
+details:
+  context: "Developer and critic iterations expanded coverage beyond monotonic inputs."
+  acceptance_criteria:
+    - "Ten canonical and ten delayed-input replays complete without inversion."
+  results:
+    - "20/20 replay runs passed."
+  next_step: "Accept the stable implementation as current."
+evidence:
+  - "EVD-0009"
+  - "EVD-0010"

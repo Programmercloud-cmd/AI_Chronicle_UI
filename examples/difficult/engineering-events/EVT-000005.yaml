@@ -1,0 +1,14 @@
+schema_version: 1
+id: "EVT-000005"
+occurred_at: "2026-04-11T16:00:00+02:00"
+recorded_at: "2026-04-11T16:05:00+02:00"
+milestone_id: "TIM-002"
+kind: "implementation"
+actor:
+  type: "agent"
+  role: "developer"
+  label: "developer iteration 3"
+outcome: "completed"
+summary: "Added deterministic tie-breaking, duplicate rejection, and complete fixtures."
+evidence:
+  - "EVD-0007"

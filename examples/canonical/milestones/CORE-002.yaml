@@ -1,0 +1,21 @@
+schema_version: 1
+id: "CORE-002"
+occurred_at: "2026-04-12T11:08:33+02:00"
+recorded_at: "2026-04-12T11:20:00+02:00"
+title: "Baseline Working"
+summary: "Five canonical replays completed without queue inversion."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-001"
+status: "accepted"
+details:
+  context: "A stable reference was required before fault injection."
+  unchanged:
+    - "The original timestamp ordering policy remained in place."
+  acceptance_criteria:
+    - "Five consecutive canonical replays complete."
+  results:
+    - "5/5 runs passed."
+  next_step: "Exercise delayed and out-of-order inputs."
+evidence:
+  - "EVD-0002"

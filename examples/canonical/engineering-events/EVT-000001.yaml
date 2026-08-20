@@ -1,0 +1,14 @@
+schema_version: 1
+id: "EVT-000001"
+occurred_at: "2026-04-29T09:10:00+02:00"
+recorded_at: "2026-04-29T09:12:00+02:00"
+milestone_id: "TIM-003"
+kind: "implementation"
+actor:
+  type: "agent"
+  role: "developer"
+  label: "developer iteration 1"
+outcome: "completed"
+summary: "Added the first mixed-clock replay fixture."
+evidence:
+  - "EVD-0007"

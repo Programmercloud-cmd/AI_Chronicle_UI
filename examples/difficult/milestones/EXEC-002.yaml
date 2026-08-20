@@ -1,0 +1,23 @@
+schema_version: 1
+id: "EXEC-002"
+occurred_at: "2026-03-10T09:35:00+01:00"
+recorded_at: "2026-03-10T10:00:00+01:00"
+title: "Executor Path Abandoned"
+summary: "Further scheduler tuning was stopped after failing the causal check."
+branch_id: "BR-EXECUTOR"
+parents:
+  - "EXEC-001"
+status: "abandoned"
+relations:
+  - type: "related_to"
+    target: "CORE-003"
+    explanation: "The abandoned path was motivated by the accepted executor hypothesis."
+details:
+  context: "Two scheduler configurations changed throughput but not inversion timing."
+  results:
+    - "No tested configuration removed the inversion."
+  known_limitations:
+    - "The branch did not instrument source clock domains."
+  next_step: "Preserve the failed path and shift effort to timestamp provenance."
+evidence:
+  - "EVD-0004"

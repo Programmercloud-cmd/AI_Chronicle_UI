@@ -1,0 +1,5 @@
+Registration investigation
+
+Tighter degeneracy thresholds changed endpoint error from 0.42 m to 0.31 m.
+Timestamp inversion count remained 6/6 for offset input and 0/6 otherwise.
+Conclusion: registration tuning does not address the queue fault.

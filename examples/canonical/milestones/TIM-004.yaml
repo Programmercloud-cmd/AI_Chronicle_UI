@@ -1,0 +1,25 @@
+schema_version: 1
+id: "TIM-004"
+occurred_at: "2026-05-05T14:30:52+02:00"
+recorded_at: "2026-05-05T14:42:10+02:00"
+title: "Stable Implementation Accepted"
+summary: "The validated timestamp repair became the current project state."
+branch_id: "BR-TIMING"
+parents:
+  - "TIM-003"
+status: "accepted"
+details:
+  context: "Replay evidence and independent review supported promotion."
+  changed:
+    - "Promoted the normalized timestamp queue as the accepted implementation."
+  unchanged:
+    - "The rejected original branch remains in history."
+  acceptance_criteria:
+    - "Implementation, replay evidence, and critic review are accepted."
+  results:
+    - "All acceptance evidence passed."
+  known_limitations:
+    - "Long-duration performance remains unmeasured."
+  next_step: "Run the performance benchmark."
+evidence:
+  - "EVD-0010"

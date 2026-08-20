@@ -1,0 +1,5 @@
+Critic result: ACCEPT
+
+The factorial experiment separates executor load from clock offset. The stored
+result disproves the executor hypothesis accepted at CORE-003 without modifying
+that historical record. Recovery behavior and failure paths remain visible.

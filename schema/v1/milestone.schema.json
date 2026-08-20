@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/milestone.schema.json",
+  "title": "MilestoneRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "occurred_at", "recorded_at", "title", "summary", "branch_id", "parents", "status"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "id": { "$ref": "./common.schema.json#/$defs/milestoneId" },
+    "occurred_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "recorded_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "title": { "$ref": "./common.schema.json#/$defs/singleLine" },
+    "summary": { "$ref": "./common.schema.json#/$defs/singleLine" },
+    "branch_id": { "$ref": "./common.schema.json#/$defs/branchId" },
+    "parents": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./common.schema.json#/$defs/milestoneId" }
+    },
+    "status": {
+      "enum": ["accepted", "rejected", "abandoned", "blocked", "informational"]
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "target", "explanation"],
+        "properties": {
+          "type": { "enum": ["supersedes", "disproves", "reverts_to", "related_to"] },
+          "target": { "$ref": "./common.schema.json#/$defs/milestoneId" },
+          "explanation": { "$ref": "./common.schema.json#/$defs/nonEmptyString" }
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": { "type": "string" },
+        "changed": { "$ref": "#/$defs/stringArray" },
+        "unchanged": { "$ref": "#/$defs/stringArray" },
+        "hypotheses": { "$ref": "#/$defs/stringArray" },
+        "acceptance_criteria": { "$ref": "#/$defs/stringArray" },
+        "results": { "$ref": "#/$defs/stringArray" },
+        "known_limitations": { "$ref": "#/$defs/stringArray" },
+        "next_step": { "type": "string" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./common.schema.json#/$defs/evidenceId" }
+    },
+    "code_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["diff_evidence_id", "why", "previous_behavior", "new_behavior"],
+        "properties": {
+          "diff_evidence_id": { "$ref": "./common.schema.json#/$defs/evidenceId" },
+          "why": { "type": "string" },
+          "previous_behavior": { "type": "string" },
+          "new_behavior": { "type": "string" },
+          "risks": { "$ref": "#/$defs/stringArray" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

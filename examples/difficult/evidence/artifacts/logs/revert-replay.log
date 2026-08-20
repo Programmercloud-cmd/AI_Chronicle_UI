@@ -1,0 +1,4 @@
+2026-05-01T09:39:00+02:00 restored_state=CORE-002
+2026-05-01T09:41:00+02:00 run=1 digest=96dffbc3 status=pass
+2026-05-01T09:43:00+02:00 run=2 digest=96dffbc3 status=pass
+2026-05-01T09:45:00+02:00 run=3 digest=96dffbc3 status=pass

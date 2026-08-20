@@ -1,0 +1,9 @@
+schema_version: 1
+id: "EVD-0004"
+captured_at: "2026-04-20T16:49:00+02:00"
+kind: "screenshot"
+title: "Queue inversion trace screenshot"
+description: "External screenshot retained as a link; Chronicle does not fetch it."
+source:
+  kind: "url"
+  url: "https://example.test/chronicle/canonical/queue-inversion.png"

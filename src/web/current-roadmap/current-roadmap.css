@@ -1,0 +1,254 @@
+.orientation-page {
+  width: min(100%, 58rem);
+  margin: 0 auto;
+}
+
+.orientation-heading {
+  margin-bottom: clamp(2.5rem, 7vw, 5rem);
+}
+
+.orientation-heading h1 {
+  margin-bottom: 1.35rem;
+}
+
+.state-statement {
+  max-width: 45rem;
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.35rem, 2.6vw, 2.25rem);
+  line-height: 1.35;
+}
+
+.current-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin: 0 0 4rem;
+  padding: 1.25rem 0;
+  border-block: 1px solid var(--line);
+}
+
+.current-times div {
+  min-width: 0;
+}
+
+.current-times dt,
+.current-section h2,
+.compact-section h2,
+.roadmap-detail h3 {
+  margin: 0 0 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.current-times dd {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.current-times a,
+.orientation-page a {
+  color: var(--text);
+  text-decoration-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.time-detail {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.current-section,
+.compact-section {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.3fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.current-section > :not(h2),
+.compact-section > :not(h2) {
+  margin-block: 0;
+}
+
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plain-list li + li {
+  margin-top: 0.7rem;
+}
+
+.blocker-list > li {
+  padding-left: 1rem;
+  border-left: 2px solid var(--accent);
+}
+
+.reference-row {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.reference-id {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.86em;
+}
+
+.status-text {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.related-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: baseline;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.related-links > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.roadmap-intro,
+.updated-note {
+  max-width: 38rem;
+  margin-block: 0.25rem;
+}
+
+.updated-note {
+  font-size: 0.9rem;
+}
+
+.roadmap-outline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roadmap-item {
+  padding: 1.65rem 0 2rem;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 6rem;
+}
+
+.roadmap-children {
+  margin: 0;
+  padding-left: clamp(1.25rem, 4vw, 3rem);
+  list-style: none;
+}
+
+.roadmap-item-heading {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.roadmap-item-heading h2 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  font-weight: 550;
+  letter-spacing: -0.015em;
+}
+
+.roadmap-item-heading time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.roadmap-level {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.18rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.status-active,
+.status-completed {
+  color: var(--accent);
+}
+
+.status-blocked {
+  color: #a2372a;
+}
+
+:root[data-theme="dark"] .status-blocked {
+  color: #ff8e7f;
+}
+
+.roadmap-detail {
+  margin-top: 1.25rem;
+}
+
+.roadmap-detail ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.roadmap-blocker {
+  margin: 1rem 0 0;
+  color: var(--text);
+}
+
+.empty-note {
+  margin-top: 2rem;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .current-times,
+  .current-section,
+  .compact-section {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmap-item-heading {
+    display: block;
+  }
+
+  .roadmap-item-heading time {
+    display: block;
+    margin-top: 0.75rem;
+  }
+}

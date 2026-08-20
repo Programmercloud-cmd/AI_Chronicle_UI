@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/current.schema.json",
+  "title": "CurrentRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "updated_at", "milestone_id", "state"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "updated_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "milestone_id": { "$ref": "./common.schema.json#/$defs/milestoneId" },
+    "state": { "type": "string" },
+    "current_hypothesis": { "type": "string" },
+    "active_work": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "next_step": { "type": "string" },
+    "blocked": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary"],
+        "properties": {
+          "summary": { "$ref": "./common.schema.json#/$defs/nonEmptyString" },
+          "blocked_by": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "./common.schema.json#/$defs/typedReference" }
+          }
+        }
+      }
+    },
+    "related_roadmap_items": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./common.schema.json#/$defs/roadmapId" }
+    },
+    "history_projection": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./common.schema.json#/$defs/roadmapId" }
+    }
+  }
+}

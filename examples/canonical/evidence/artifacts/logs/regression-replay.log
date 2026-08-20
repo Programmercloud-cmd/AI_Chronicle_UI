@@ -1,0 +1,3 @@
+2026-04-20T16:46:51+02:00 fault injection source=imu delay_ms=180
+2026-04-20T16:47:20+02:00 queue inversion previous=1713624439.931 current=1713624439.902
+2026-04-20T16:47:21+02:00 replay stopped reason=non_monotonic_queue

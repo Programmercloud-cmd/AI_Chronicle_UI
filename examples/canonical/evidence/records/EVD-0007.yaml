@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0007"
+captured_at: "2026-04-28T15:40:00+02:00"
+kind: "test_output"
+title: "Targeted timestamp queue tests"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/targeted-tests.txt"
+  media_type: "text/plain"
+  sha256: "2a88954fcf699ec3a0371bfdc1a7a7d0f0834783e46c658a96dd1bcfdbafe178"

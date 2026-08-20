@@ -1,0 +1,5 @@
+Critic result: REJECT
+
+Dedicated scheduling changed CPU use but did not remove timestamp inversion.
+The branch does not test the accepted causal claim because source clock metadata
+is still absent. Further scheduler tuning is unsupported by the evidence.

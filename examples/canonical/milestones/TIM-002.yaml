@@ -1,0 +1,37 @@
+schema_version: 1
+id: "TIM-002"
+occurred_at: "2026-04-28T15:42:31+02:00"
+recorded_at: "2026-04-28T15:55:00+02:00"
+title: "Alternative Fix"
+summary: "Timestamp normalization replaced the rejected queue-delay approach."
+branch_id: "BR-TIMING"
+parents:
+  - "TIM-001"
+status: "accepted"
+relations:
+  - type: "supersedes"
+    target: "CORE-004"
+    explanation: "Normalization corrects the clock-domain mismatch without adding a fixed delay."
+details:
+  context: "The root-cause evidence supported correcting timestamps at ingestion."
+  changed:
+    - "Normalize timestamps into the replay clock before queue ordering."
+  unchanged:
+    - "Registration and payload processing remain unchanged."
+  acceptance_criteria:
+    - "Delayed mixed-clock samples are ordered by normalized time."
+  results:
+    - "Targeted queue tests passed."
+  known_limitations:
+    - "Full replay validation was still pending."
+  next_step: "Run canonical and delayed-input validation."
+evidence:
+  - "EVD-0007"
+  - "EVD-0008"
+code_changes:
+  - diff_evidence_id: "EVD-0008"
+    why: "Raw source timestamps came from different clock domains."
+    previous_behavior: "The queue compared raw source timestamps directly."
+    new_behavior: "The queue normalizes each timestamp before ordering."
+    risks:
+      - "Incorrect source offset metadata would still produce incorrect ordering."

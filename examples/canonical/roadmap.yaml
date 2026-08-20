@@ -1,0 +1,58 @@
+schema_version: 1
+updated_at: "2026-05-09T10:17:00+02:00"
+items:
+  - id: "RM-001"
+    title: "Capture baseline replay"
+    status: "completed"
+    order: 10
+    acceptance_criteria:
+      - "A repeatable baseline replay and log are stored."
+    related_milestones:
+      - "CORE-002"
+  - id: "RM-002"
+    title: "Reproduce queue regression"
+    status: "completed"
+    order: 20
+    acceptance_criteria:
+      - "The inversion is reproduced with the canonical input."
+    related_milestones:
+      - "CORE-003"
+  - id: "RM-003"
+    title: "Performance Benchmark"
+    status: "active"
+    order: 30
+    follows:
+      type: "milestone"
+      id: "TIM-004"
+    branch_id: "BR-TIMING"
+    acceptance_criteria:
+      - "Three two-hour runs remain within the latency budget."
+    related_milestones:
+      - "TIM-004"
+    planned_for: "2026-05-19"
+  - id: "RM-004"
+    title: "Integration Validation"
+    status: "pending"
+    order: 40
+    follows:
+      type: "roadmap"
+      id: "RM-003"
+    branch_id: "BR-TIMING"
+    acceptance_criteria:
+      - "The fix passes replay and live-input integration suites."
+    planned_for: "2026-06-05"
+  - id: "RM-005"
+    title: "Production Release"
+    status: "blocked"
+    order: 50
+    follows:
+      type: "roadmap"
+      id: "RM-004"
+    branch_id: "BR-TIMING"
+    acceptance_criteria:
+      - "Release artifacts and rollback notes are approved."
+    blocker_summary: "Integration validation has not completed."
+    blocked_by:
+      - type: "roadmap"
+        id: "RM-004"
+    planned_for: "2026-06-18"

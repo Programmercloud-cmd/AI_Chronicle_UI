@@ -1,0 +1,15 @@
+schema_version: 1
+id: "EVT-000002"
+occurred_at: "2026-04-29T11:30:00+02:00"
+recorded_at: "2026-04-29T11:32:00+02:00"
+milestone_id: "TIM-003"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 1"
+outcome: "reject"
+summary: "Rejected because negative offsets were not covered."
+details: "Add a source whose normalized timestamp precedes its raw timestamp."
+evidence:
+  - "EVD-0007"

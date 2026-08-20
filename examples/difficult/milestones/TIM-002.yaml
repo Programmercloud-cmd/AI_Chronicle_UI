@@ -1,0 +1,43 @@
+schema_version: 1
+id: "TIM-002"
+occurred_at: "2026-04-12T15:50:00+02:00"
+recorded_at: "2026-04-12T16:05:00+02:00"
+title: "Normalization Fix Accepted"
+summary: "The third implementation passed independent review and mixed-clock replay."
+branch_id: "BR-TIMING"
+parents:
+  - "TIM-001"
+status: "accepted"
+relations:
+  - type: "supersedes"
+    target: "EXEC-001"
+    explanation: "Timestamp normalization replaces scheduler isolation with a root-cause correction."
+details:
+  context: "Two critic rejections expanded validation before the repair was accepted."
+  changed:
+    - "Introduced explicit clock-domain offsets."
+    - "Normalized timestamps before queue comparison."
+    - "Rejected backward normalized time and duplicate source sequence numbers."
+  unchanged:
+    - "Payload processing and registration math remain unchanged."
+  acceptance_criteria:
+    - "Mixed-clock samples are deterministic across input arrival order."
+    - "Malformed offsets and duplicate sequences fail with useful errors."
+  results:
+    - "All targeted and replay tests passed after developer iteration three."
+  known_limitations:
+    - "Cross-platform clock metadata remains to be benchmarked."
+  next_step: "Combine the fix with the restored mainline state."
+evidence:
+  - "EVD-0006"
+  - "EVD-0007"
+  - "EVD-0008"
+  - "EVD-0016"
+code_changes:
+  - diff_evidence_id: "EVD-0007"
+    why: "Raw timestamp comparison mixed independent source clocks and accepted duplicate source sequences."
+    previous_behavior: "The queue sorted raw timestamps and exposed an untyped empty-pop failure."
+    new_behavior: "The queue validates source identity, normalizes timestamps, rejects duplicates, and reports explicit failures."
+    risks:
+      - "Bad clock calibration metadata can still produce a wrong normalized order."
+      - "Existing callers must provide a source clock offset and sequence number."

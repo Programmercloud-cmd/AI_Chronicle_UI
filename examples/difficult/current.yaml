@@ -1,0 +1,23 @@
+schema_version: 1
+updated_at: "2026-06-12T10:30:00+02:00"
+milestone_id: "REC-003"
+state: "The merged recovery path is accepted after clock-domain evidence disproved the executor hypothesis."
+current_hypothesis: "Long-run drift is now dominated by calibration stability rather than executor pressure."
+active_work:
+  - "Run the cross-platform benchmark."
+  - "Prepare integration validation fixtures."
+next_step: "Complete RM-003 and unblock integration validation."
+blocked:
+  - summary: "Integration validation waits for the cross-platform benchmark."
+    blocked_by:
+      - type: "roadmap"
+        id: "RM-003"
+  - summary: "Hardware certification waits for an external laboratory slot."
+related_roadmap_items:
+  - "RM-003"
+  - "RM-004"
+  - "RM-006"
+history_projection:
+  - "RM-003"
+  - "RM-004"
+  - "RM-005"

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/branch.schema.json",
+  "title": "BranchRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "title"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "id": { "$ref": "./common.schema.json#/$defs/branchId" },
+    "title": { "$ref": "./common.schema.json#/$defs/singleLine" },
+    "description": { "type": "string" }
+  }
+}

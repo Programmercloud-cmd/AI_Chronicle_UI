@@ -1,0 +1,3 @@
+2025-02-01T11:10:00+01:00 run=1 digest=96dffbc3 status=pass
+2025-02-01T11:12:00+01:00 run=2 digest=96dffbc3 status=pass
+2025-02-01T11:14:00+01:00 run=3 digest=96dffbc3 status=pass

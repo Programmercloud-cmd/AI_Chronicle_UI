@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/evidence.schema.json",
+  "title": "EvidenceRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "captured_at", "kind", "title", "source"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "id": { "$ref": "./common.schema.json#/$defs/evidenceId" },
+    "captured_at": { "$ref": "./common.schema.json#/$defs/timestamp" },
+    "kind": { "enum": ["test_output", "benchmark", "critic_report", "screenshot", "log", "profile", "experiment_report", "diff", "file", "other"] },
+    "title": { "$ref": "./common.schema.json#/$defs/singleLine" },
+    "description": { "type": "string" },
+    "source": {
+      "oneOf": [
+        { "$ref": "#/$defs/artifactSource" },
+        { "$ref": "#/$defs/urlSource" },
+        { "$ref": "#/$defs/repositorySource" }
+      ]
+    },
+    "origin": { "$ref": "#/$defs/origin" }
+  },
+  "$defs": {
+    "artifactSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "media_type", "sha256"],
+      "properties": {
+        "kind": { "const": "artifact" },
+        "path": { "$ref": "./common.schema.json#/$defs/artifactPath" },
+        "media_type": { "$ref": "./common.schema.json#/$defs/nonEmptyString" },
+        "sha256": { "$ref": "./common.schema.json#/$defs/sha256" }
+      }
+    },
+    "urlSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url"],
+      "properties": {
+        "kind": { "const": "url" },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        }
+      }
+    },
+    "repositorySource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "revision"],
+      "properties": {
+        "kind": { "const": "repository_ref" },
+        "path": { "$ref": "./common.schema.json#/$defs/repositoryPath" },
+        "revision": { "$ref": "./common.schema.json#/$defs/nonEmptyString" }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool"],
+      "properties": {
+        "tool": { "$ref": "./common.schema.json#/$defs/nonEmptyString" },
+        "command": { "$ref": "./common.schema.json#/$defs/nonEmptyString" },
+        "base_revision": { "$ref": "./common.schema.json#/$defs/nonEmptyString" },
+        "target_revision": { "$ref": "./common.schema.json#/$defs/nonEmptyString" }
+      }
+    }
+  }
+}

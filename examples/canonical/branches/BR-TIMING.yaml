@@ -1,0 +1,4 @@
+schema_version: 1
+id: "BR-TIMING"
+title: "Timing investigation"
+description: "The accepted alternative path forked from the regression milestone."

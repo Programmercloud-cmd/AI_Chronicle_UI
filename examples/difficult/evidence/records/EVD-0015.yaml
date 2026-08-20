@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0015"
+captured_at: "2026-06-12T10:25:00+02:00"
+kind: "other"
+title: "Roadmap supersession decision"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/roadmap-change.txt"
+  media_type: "text/plain"
+  sha256: "85c945a3d6395757ad49d177ed21a6972fc544f05344c51b882ecc5a70f00867"

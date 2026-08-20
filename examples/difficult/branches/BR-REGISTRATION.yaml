@@ -1,0 +1,4 @@
+schema_version: 1
+id: "BR-REGISTRATION"
+title: "Registration investigation"
+description: "A later branch from an older baseline exploring degeneracy."

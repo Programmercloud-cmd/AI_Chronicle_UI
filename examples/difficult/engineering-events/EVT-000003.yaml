@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000003"
+occurred_at: "2026-04-08T14:10:00+02:00"
+recorded_at: "2026-04-08T14:15:00+02:00"
+milestone_id: "TIM-002"
+kind: "implementation"
+actor:
+  type: "agent"
+  role: "developer"
+  label: "developer iteration 2"
+outcome: "completed"
+summary: "Added explicit clock metadata validation and queue errors."
+details: "Arrival-order permutations and duplicate source sequences were still uncovered."

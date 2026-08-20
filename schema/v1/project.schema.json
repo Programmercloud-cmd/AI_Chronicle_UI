@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/project.schema.json",
+  "title": "ProjectRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project", "display"],
+  "properties": {
+    "schema_version": { "$ref": "./common.schema.json#/$defs/schemaVersion" },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "$ref": "./common.schema.json#/$defs/projectId" },
+        "title": { "$ref": "./common.schema.json#/$defs/singleLine" },
+        "description": { "type": "string" }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timezone"],
+      "properties": {
+        "timezone": { "$ref": "./common.schema.json#/$defs/ianaTimezone" }
+      }
+    }
+  }
+}

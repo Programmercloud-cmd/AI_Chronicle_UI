@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000001"
+occurred_at: "2026-04-05T09:00:00+02:00"
+recorded_at: "2026-04-05T09:05:00+02:00"
+milestone_id: "TIM-002"
+kind: "implementation"
+actor:
+  type: "agent"
+  role: "developer"
+  label: "developer iteration 1"
+outcome: "completed"
+summary: "Normalized timestamps using a source-offset map."
+details: "The first version omitted invalid-offset and duplicate-sequence handling."

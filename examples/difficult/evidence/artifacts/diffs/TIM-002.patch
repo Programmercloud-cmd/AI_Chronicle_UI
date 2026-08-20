@@ -1,0 +1,89 @@
+diff --git a/evidence/artifacts/sample-base/src/timestamp_queue.py b/evidence/artifacts/sample-base/src/timestamp_queue.py
+index 22c6bac..69e9a76 100644
+--- a/evidence/artifacts/sample-base/src/timestamp_queue.py
++++ b/evidence/artifacts/sample-base/src/timestamp_queue.py
+@@ -1,4 +1,23 @@
+ from dataclasses import dataclass
++from math import isfinite
++from typing import Mapping
++
++
++class TimestampQueueError(ValueError):
++    pass
++
++
++@dataclass(frozen=True)
++class ClockModel:
++    offsets: Mapping[str, float]
++
++    def normalize(self, source: str, timestamp: float) -> float:
++        if source not in self.offsets:
++            raise TimestampQueueError(f"unknown clock source: {source}")
++        offset = self.offsets[source]
++        if not isfinite(timestamp) or not isfinite(offset):
++            raise TimestampQueueError("timestamp and offset must be finite")
++        return timestamp + offset
+ 
+ 
+ @dataclass(frozen=True)
+@@ -9,26 +28,51 @@ class Sample:
+     payload: bytes
+ 
+ 
++@dataclass(frozen=True)
++class QueuedSample:
++    normalized_timestamp: float
++    sample: Sample
++
++
+ class TimestampQueue:
+-    def __init__(self, max_size: int = 1024) -> None:
++    def __init__(self, clock: ClockModel, max_size: int = 1024) -> None:
+         if max_size < 1:
+-            raise ValueError("max_size must be positive")
++            raise TimestampQueueError("max_size must be positive")
++        self._clock = clock
+         self._max_size = max_size
+-        self._items: list[Sample] = []
++        self._items: list[QueuedSample] = []
++        self._seen_sequences: set[tuple[str, int]] = set()
+ 
+     def push(self, sample: Sample) -> None:
+         if not sample.source:
+-            raise ValueError("sample source is required")
++            raise TimestampQueueError("sample source is required")
++        if sample.sequence < 0:
++            raise TimestampQueueError("sample sequence must be non-negative")
++        key = (sample.source, sample.sequence)
++        if key in self._seen_sequences:
++            raise TimestampQueueError("duplicate source sequence")
+         if len(self._items) >= self._max_size:
+-            raise OverflowError("timestamp queue is full")
+-        self._items.append(sample)
+-        self._items.sort(key=lambda item: item.source_timestamp)
++            raise TimestampQueueError("timestamp queue is full")
++        normalized = self._clock.normalize(sample.source, sample.source_timestamp)
++        self._items.append(QueuedSample(normalized, sample))
++        self._items.sort(
++            key=lambda item: (
++                item.normalized_timestamp,
++                item.sample.source,
++                item.sample.sequence,
++            )
++        )
++        self._seen_sequences.add(key)
+ 
+     def pop(self) -> Sample:
+-        return self._items.pop(0)
++        if not self._items:
++            raise TimestampQueueError("timestamp queue is empty")
++        queued = self._items.pop(0)
++        self._seen_sequences.remove((queued.sample.source, queued.sample.sequence))
++        return queued.sample
+ 
+     def __len__(self) -> int:
+         return len(self._items)
+ 
+     def snapshot(self) -> tuple[Sample, ...]:
+-        return tuple(self._items)
++        return tuple(item.sample for item in self._items)

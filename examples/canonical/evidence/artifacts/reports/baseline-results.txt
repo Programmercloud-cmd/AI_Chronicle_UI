@@ -1,0 +1,5 @@
+Canonical baseline replay
+Runs: 5
+Completed: 5
+Timestamp inversions: 0
+Conclusion: baseline accepted for fault-injection comparison.

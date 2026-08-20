@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVT-000002"
+occurred_at: "2026-04-06T11:30:00+02:00"
+recorded_at: "2026-04-06T11:35:00+02:00"
+milestone_id: "TIM-002"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 1"
+outcome: "reject"
+summary: "Rejected missing validation for unknown and non-finite clock metadata."
+details: "Return specific failures before mutating queue state."

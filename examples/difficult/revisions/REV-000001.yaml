@@ -1,0 +1,14 @@
+schema_version: 1
+id: "REV-000001"
+target:
+  type: "milestone"
+  id: "CORE-002"
+recorded_at: "2026-06-11T09:00:00+02:00"
+previous_revision: null
+reason: "clarification"
+summary: "Clarify the known scope of the original deterministic baseline without changing its conclusion."
+changes:
+  - operation: "add"
+    path: "/details/known_limitations"
+    value:
+      - "The baseline did not contain mixed-clock or delayed-input samples."

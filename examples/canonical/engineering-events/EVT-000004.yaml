@@ -1,0 +1,15 @@
+schema_version: 1
+id: "EVT-000004"
+occurred_at: "2026-05-01T10:05:00+02:00"
+recorded_at: "2026-05-01T10:07:00+02:00"
+milestone_id: "TIM-003"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 2"
+outcome: "reject"
+summary: "Rejected because the full replay path was not exercised."
+details: "Run canonical and delayed-input replays through the complete pipeline."
+evidence:
+  - "EVD-0007"

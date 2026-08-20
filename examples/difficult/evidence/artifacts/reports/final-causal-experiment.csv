@@ -1,0 +1,9 @@
+normalized,executor_load_pct,clock_offset_ms,runs,inversions
+false,20,0,10,0
+false,90,0,10,0
+false,20,180,10,10
+false,90,180,10,10
+true,20,0,10,0
+true,90,0,10,0
+true,20,180,10,0
+true,90,180,10,0

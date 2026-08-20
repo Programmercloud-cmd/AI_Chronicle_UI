@@ -1,0 +1,4 @@
+Critic result: ACCEPT
+
+The implementation rejects backward normalized time, covers mixed clock domains,
+and completes all twenty replay scenarios without exceeding the latency budget.

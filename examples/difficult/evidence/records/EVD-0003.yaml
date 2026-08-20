@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0003"
+captured_at: "2026-03-01T10:12:00+01:00"
+kind: "log"
+title: "Isolated-executor regression log"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/logs/isolated-regression.log"
+  media_type: "text/plain"
+  sha256: "9cdeee29b9abe4e09b976a2b66d222e7c6652b0bff4f51e2890bb015d4c606db"

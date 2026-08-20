@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0008"
+captured_at: "2026-04-12T15:50:00+02:00"
+kind: "critic_report"
+title: "Normalization fix acceptance"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/normalization-critic.txt"
+  media_type: "text/plain"
+  sha256: "599310d47c10990df53a1c77ce9238d6425af5e118eb03ac30af6d1fca231444"

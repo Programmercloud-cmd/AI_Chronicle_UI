@@ -1,0 +1,33 @@
+diff --git a/evidence/artifacts/sample-base/src/timestamp_queue.py b/evidence/artifacts/sample-base/src/timestamp_queue.py
+--- a/evidence/artifacts/sample-base/src/timestamp_queue.py
++++ b/evidence/artifacts/sample-base/src/timestamp_queue.py
+@@ -4,16 +4,28 @@ from dataclasses import dataclass
+ @dataclass(frozen=True)
+ class Sample:
+     source_timestamp: float
++    clock_offset: float
+     payload: bytes
+ 
++    @property
++    def normalized_timestamp(self) -> float:
++        return self.source_timestamp + self.clock_offset
++
+ 
+ class TimestampQueue:
+     def __init__(self) -> None:
+         self._items: list[Sample] = []
++        self._last_timestamp: float | None = None
+ 
+     def push(self, sample: Sample) -> None:
++        normalized = sample.normalized_timestamp
++        if self._last_timestamp is not None and normalized < self._last_timestamp:
++            raise ValueError("normalized timestamp moved backward")
+         self._items.append(sample)
+-        self._items.sort(key=lambda item: item.source_timestamp)
++        self._items.sort(key=lambda item: item.normalized_timestamp)
++        self._last_timestamp = normalized
+ 
+     def pop(self) -> Sample:
++        if not self._items:
++            raise IndexError("timestamp queue is empty")
+         return self._items.pop(0)

@@ -1,0 +1,11 @@
+schema_version: 1
+id: "EVD-0002"
+captured_at: "2025-12-15T16:38:00+01:00"
+kind: "profile"
+title: "Initial executor-load profile"
+description: "The incomplete profile that supported the accepted-at-the-time executor hypothesis."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/executor-profile.csv"
+  media_type: "text/csv"
+  sha256: "2c4497ff25c26cf32ef805b6408a59526ce3d72e66341667b973fc3ad5dac40c"

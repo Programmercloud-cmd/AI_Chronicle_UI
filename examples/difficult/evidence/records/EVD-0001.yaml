@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0001"
+captured_at: "2025-02-01T11:15:00+01:00"
+kind: "test_output"
+title: "Deterministic baseline replay"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/logs/baseline-replay.log"
+  media_type: "text/plain"
+  sha256: "015d9d5e449764c2e121ee75cc1c2e06fcade96db6abfb3142ee53ae87de1c52"
+origin:
+  tool: "replay harness"
+  command: "replay --capture baseline --runs 3"

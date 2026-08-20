@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0005"
+captured_at: "2026-04-02T10:24:00+02:00"
+kind: "experiment_report"
+title: "Executor and clock-offset factorial experiment"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/clock-factorial.csv"
+  media_type: "text/csv"
+  sha256: "2ed1ee09853ca39960db4c8bbaad3a41ab9d0e6d84f001a1389382f0e37f972f"
+origin:
+  tool: "factorial replay harness"
+  command: "factorial-replay --factors executor-load,clock-offset"

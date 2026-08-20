@@ -1,0 +1,20 @@
+schema_version: 1
+id: "CORE-003"
+occurred_at: "2026-04-20T16:47:21+02:00"
+recorded_at: "2026-04-20T17:05:00+02:00"
+title: "Regression Introduced"
+summary: "Delayed sensor input reproduced a timestamp inversion."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-002"
+status: "informational"
+details:
+  context: "Fault injection revealed that the baseline covered only monotonic input."
+  hypotheses:
+    - "Executor pressure was delaying one source long enough to invert queue order."
+  results:
+    - "The inversion reproduced in every delayed-input run."
+  next_step: "Attempt a bounded queue delay."
+evidence:
+  - "EVD-0003"
+  - "EVD-0004"

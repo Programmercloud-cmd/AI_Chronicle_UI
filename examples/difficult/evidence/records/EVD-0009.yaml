@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0009"
+captured_at: "2026-05-01T09:45:00+02:00"
+kind: "test_output"
+title: "Revert replay verification"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/logs/revert-replay.log"
+  media_type: "text/plain"
+  sha256: "5c3b91faea3261cbebfb7d5604eb3817a927e1bd497956d554162febb795234c"

@@ -1,0 +1,28 @@
+schema_version: 1
+id: "REC-003"
+occurred_at: "2026-06-10T16:20:00+02:00"
+recorded_at: "2026-06-10T16:40:00+02:00"
+title: "Executor Hypothesis Disproved"
+summary: "Controlled replay disproved the previously accepted executor explanation."
+branch_id: "BR-RECOVERY"
+parents:
+  - "REC-002"
+status: "accepted"
+relations:
+  - type: "disproves"
+    target: "CORE-003"
+    explanation: "Inversion followed clock offset under fixed executor load and did not follow executor load after offset normalization."
+details:
+  context: "The earlier conclusion remains accepted-at-the-time; this later evidence changes present understanding."
+  hypotheses:
+    - "Clock-domain mismatch, not executor pressure, caused the historical inversions."
+  acceptance_criteria:
+    - "A controlled factorial replay separates executor load from source clock offset."
+  results:
+    - "Only clock offset predicted inversion before normalization; neither factor caused inversion afterward."
+  known_limitations:
+    - "External hardware certification is still pending."
+  next_step: "Run the cross-platform timing benchmark."
+evidence:
+  - "EVD-0013"
+  - "EVD-0014"

@@ -1,0 +1,21 @@
+schema_version: 1
+updated_at: "2026-05-09T10:17:00+02:00"
+milestone_id: "TIM-004"
+state: "Stable timestamp handling is accepted on the canonical replay."
+current_hypothesis: "Remaining long-run drift is independent of queue ordering."
+active_work:
+  - "Run the performance benchmark."
+next_step: "Compare benchmark results with the captured baseline."
+blocked:
+  - summary: "Production release waits for integration validation."
+    blocked_by:
+      - type: "roadmap"
+        id: "RM-004"
+related_roadmap_items:
+  - "RM-003"
+  - "RM-004"
+  - "RM-005"
+history_projection:
+  - "RM-003"
+  - "RM-004"
+  - "RM-005"

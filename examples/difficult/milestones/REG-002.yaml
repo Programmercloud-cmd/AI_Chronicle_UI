@@ -1,0 +1,21 @@
+schema_version: 1
+id: "REG-002"
+occurred_at: "2026-04-18T12:10:00+02:00"
+recorded_at: "2026-04-18T12:35:00+02:00"
+title: "Registration Tuning Rejected"
+summary: "Threshold changes altered accuracy but did not affect queue inversion."
+branch_id: "BR-REGISTRATION"
+parents:
+  - "REG-001"
+status: "rejected"
+details:
+  context: "The registration branch tested whether geometric failures appeared as timing faults."
+  changed:
+    - "Adjusted degeneracy detection thresholds for the synthetic scene."
+  acceptance_criteria:
+    - "The change removes timestamp inversion without degrading registration accuracy."
+  results:
+    - "Registration accuracy changed, but inversion count was unchanged."
+  next_step: "Stop this path and retain its negative result."
+evidence:
+  - "EVD-0011"

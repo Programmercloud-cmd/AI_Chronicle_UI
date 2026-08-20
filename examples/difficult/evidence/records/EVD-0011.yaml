@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0011"
+captured_at: "2026-04-18T12:09:00+02:00"
+kind: "experiment_report"
+title: "Registration negative result"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/registration-negative-result.txt"
+  media_type: "text/plain"
+  sha256: "4ac3b8044d1b2104192db0a325c486252a26e3ceddcd6005ccd657a6043ef24e"

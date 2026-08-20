@@ -1,0 +1,25 @@
+schema_version: 1
+id: "CORE-004"
+occurred_at: "2026-04-24T10:22:14+02:00"
+recorded_at: "2026-04-24T10:40:00+02:00"
+title: "First Fix Attempt"
+summary: "A queue delay masked the symptom but failed critic review."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-003"
+status: "rejected"
+details:
+  context: "The first response held samples briefly before sorting."
+  changed:
+    - "Added a fixed queue delay before ordering."
+  unchanged:
+    - "Source clock domains were still compared directly."
+  acceptance_criteria:
+    - "Out-of-order inputs remain correctly ordered without unacceptable latency."
+  results:
+    - "Ordering improved, but latency exceeded the budget."
+  known_limitations:
+    - "The delay treated the symptom and depended on workload timing."
+  next_step: "Instrument source clock domains."
+evidence:
+  - "EVD-0005"

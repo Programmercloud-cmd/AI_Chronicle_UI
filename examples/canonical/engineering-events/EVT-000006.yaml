@@ -1,0 +1,15 @@
+schema_version: 1
+id: "EVT-000006"
+occurred_at: "2026-05-02T09:18:07+02:00"
+recorded_at: "2026-05-02T09:20:00+02:00"
+milestone_id: "TIM-003"
+kind: "review"
+actor:
+  type: "agent"
+  role: "critic"
+  label: "critic iteration 3"
+outcome: "accept"
+summary: "Accepted the repair with full replay evidence."
+evidence:
+  - "EVD-0009"
+  - "EVD-0010"

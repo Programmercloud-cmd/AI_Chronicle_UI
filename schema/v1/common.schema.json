@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectchronicle.dev/schema/v1/common.schema.json",
+  "$defs": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "projectId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "milestoneId": {
+      "type": "string",
+      "pattern": "^(?!(?:BR|RM|EVD|EVT|REV)-)[A-Z][A-Z0-9]*-[0-9]{3,}$"
+    },
+    "branchId": {
+      "type": "string",
+      "pattern": "^BR-[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+    },
+    "roadmapId": {
+      "type": "string",
+      "pattern": "^RM-[0-9]{3,}$"
+    },
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^EVD-[0-9]{4,}$"
+    },
+    "engineeringEventId": {
+      "type": "string",
+      "pattern": "^EVT-[0-9]{6,}$"
+    },
+    "revisionId": {
+      "type": "string",
+      "pattern": "^REV-[0-9]{6,}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "singleLine": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifactPath": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!//)(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:\\/|$))[^\\\\\\r\\n]+$"
+    },
+    "repositoryPath": {
+      "$ref": "#/$defs/artifactPath"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "jsonPointer": {
+      "type": "string",
+      "pattern": "^/(?:[^~/]|~[01])+(?:/(?:[^~/]|~[01])+)*$"
+    },
+    "ianaTimezone": {
+      "type": "string",
+      "format": "iana-timezone"
+    },
+    "typedReference": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "const": "milestone" },
+            "id": { "$ref": "#/$defs/milestoneId" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "const": "roadmap" },
+            "id": { "$ref": "#/$defs/roadmapId" }
+          }
+        }
+      ]
+    }
+  }
+}

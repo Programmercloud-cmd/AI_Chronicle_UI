@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0006"
+captured_at: "2026-04-12T15:40:00+02:00"
+kind: "test_output"
+title: "Normalization acceptance tests"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/normalization-tests.txt"
+  media_type: "text/plain"
+  sha256: "aeb6ba9bf9f04a1543ff864cd22aa5d70c471b38b90930bb5ad6d56c78966719"

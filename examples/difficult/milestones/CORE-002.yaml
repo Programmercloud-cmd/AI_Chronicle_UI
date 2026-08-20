@@ -1,0 +1,21 @@
+schema_version: 1
+id: "CORE-002"
+occurred_at: "2025-02-01T11:15:00+01:00"
+recorded_at: "2025-02-01T11:30:00+01:00"
+title: "Deterministic Baseline Accepted"
+summary: "Three replay runs produced byte-identical summaries."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-001"
+status: "accepted"
+details:
+  context: "The baseline provides the older state later restored by a revert."
+  unchanged:
+    - "Raw source timestamps remain the queue ordering key."
+  acceptance_criteria:
+    - "Three replay summaries are byte-identical."
+  results:
+    - "3/3 deterministic runs passed."
+  next_step: "Exercise the system under scheduling pressure."
+evidence:
+  - "EVD-0001"

@@ -1,0 +1,11 @@
+schema_version: 1
+id: "EVD-0013"
+captured_at: "2026-06-10T16:18:00+02:00"
+kind: "experiment_report"
+title: "Final causal experiment"
+description: "Controlled evidence separating executor load from clock-domain offset."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/final-causal-experiment.csv"
+  media_type: "text/csv"
+  sha256: "d18a53b1a448eff00d4325d0cf15a87506175bc362bee7f64695962e3c721d36"

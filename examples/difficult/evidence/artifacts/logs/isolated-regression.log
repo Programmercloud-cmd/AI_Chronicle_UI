@@ -1,0 +1,3 @@
+2026-03-01T10:08:00+01:00 executor=isolated load_pct=18
+2026-03-01T10:11:58+01:00 source=imu clock_offset_ms=180
+2026-03-01T10:12:00+01:00 inversion=true normalized=false

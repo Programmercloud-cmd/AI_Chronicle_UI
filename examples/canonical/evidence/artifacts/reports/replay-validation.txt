@@ -1,0 +1,5 @@
+Canonical replay validation
+canonical runs: 10/10 PASS
+delayed-input runs: 10/10 PASS
+queue inversions: 0
+latency budget violations: 0

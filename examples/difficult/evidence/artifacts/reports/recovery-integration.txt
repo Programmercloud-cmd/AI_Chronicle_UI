@@ -1,0 +1,6 @@
+Recovery integration report
+Parents: REC-001, CORE-005
+Owning branch: BR-RECOVERY
+Replay suite: 18/18 PASS
+Topology checks: PASS
+Registration output unchanged: PASS

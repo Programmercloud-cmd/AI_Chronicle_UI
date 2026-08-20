@@ -1,0 +1,10 @@
+schema_version: 1
+id: "EVD-0003"
+captured_at: "2026-04-20T16:47:21+02:00"
+kind: "log"
+title: "Regression reproduction log"
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/logs/regression-replay.log"
+  media_type: "text/plain"
+  sha256: "7e2eaf1394da9899edfb29e5c16bc8d5f73b835ab2064dd8759e8dff9842166d"

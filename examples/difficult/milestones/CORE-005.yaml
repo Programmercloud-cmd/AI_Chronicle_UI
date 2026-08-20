@@ -1,0 +1,27 @@
+schema_version: 1
+id: "CORE-005"
+occurred_at: "2026-05-01T09:45:00+02:00"
+recorded_at: "2026-05-01T10:05:00+02:00"
+title: "Mainline Reverted to Baseline"
+summary: "The latest mainline state restored the older deterministic baseline."
+branch_id: "BR-MAIN"
+parents:
+  - "CORE-004"
+status: "accepted"
+relations:
+  - type: "reverts_to"
+    target: "CORE-002"
+    explanation: "The mainline restored baseline behavior while preserving all later investigations in history."
+details:
+  context: "Rejected executor changes were removed before integrating the timing repair."
+  changed:
+    - "Restored queue behavior represented by CORE-002."
+  unchanged:
+    - "Later milestones and evidence remain immutable and visible."
+  acceptance_criteria:
+    - "The baseline replay again produces the CORE-002 result."
+  results:
+    - "3/3 baseline replays matched the stored baseline."
+  next_step: "Merge the accepted timing repair onto the restored state."
+evidence:
+  - "EVD-0009"
