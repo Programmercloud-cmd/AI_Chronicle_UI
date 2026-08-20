@@ -6,10 +6,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import axe from "axe-core";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { loadChronicle } from "../../../src/data";
 import { validateChronicle } from "../../../src/domain";
@@ -46,11 +46,23 @@ function mockApi(snapshot: PublicChronicleSnapshot, diff = canonicalDiff): Retur
   return fetchMock;
 }
 
+function RouteStateProbe() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <div data-testid="route-state-probe">
+      <output aria-label="Current test route">{location.pathname}</output>
+      <button type="button" onClick={() => navigate(-1)}>Test route back</button>
+    </div>
+  );
+}
+
 function renderDetail(id: string) {
   return render(
     <MemoryRouter initialEntries={[`/milestones/${id}`]}>
       <SnapshotProvider>
         <Routes><Route path="/milestones/:milestoneId" element={<MilestoneDetailPage />} /></Routes>
+        <RouteStateProbe />
       </SnapshotProvider>
     </MemoryRouter>,
   );
@@ -87,6 +99,92 @@ describe("milestone detail", () => {
     expect(screen.getByRole("heading", { name: "Visible amendments" })).toBeVisible();
     expect(screen.getByText("REV-000001")).toBeVisible();
     expect(screen.getByText(/Clarify the known scope/u)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Milestone neighborhood" })).toBeVisible();
+    expect(screen.getByRole("img", {
+      name: "Current milestone: Deterministic Baseline Accepted (CORE-002)",
+    })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("places the neighborhood beside intact hero content with bounded overflow semantics", async () => {
+    mockApi(difficult);
+    const view = renderDetail("CORE-002");
+    await screen.findByRole("heading", { name: "Deterministic Baseline Accepted" });
+
+    const hero = view.container.querySelector(".detail-hero");
+    const grid = hero?.querySelector(":scope > .detail-hero-grid");
+    expect(grid).not.toBeNull();
+    expect(grid?.children[0]).toHaveClass("detail-hero-content");
+    expect(grid?.children[1]).toHaveClass("milestone-neighborhood");
+    expect(within(grid?.children[0] as HTMLElement).getByText("Deterministic Baseline Accepted")).toBeVisible();
+    expect(within(grid?.children[0] as HTMLElement).getByText("CORE-002")).toBeVisible();
+    expect(within(grid?.children[1] as HTMLElement).getByRole("region", {
+      name: "Direct parent and child milestone topology",
+    })).toHaveClass("milestone-neighborhood-scroll");
+  });
+
+  it("keeps a long-title, high-degree neighborhood contained without removing detail content", async () => {
+    const crowded = JSON.parse(JSON.stringify(difficult)) as PublicChronicleSnapshot;
+    const center = crowded.milestones.find((record) => record.value.id === "CORE-002");
+    const template = crowded.milestones.find((record) => record.value.id === "CORE-003");
+    if (center === undefined || template === undefined) throw new Error("crowded fixture inputs missing");
+    Object.assign(center.value, {
+      title: "A deliberately long accepted baseline milestone title that must wrap safely",
+    });
+    const mutableMilestones = crowded.milestones as unknown as Array<typeof template>;
+    for (let index = 0; index < 10; index += 1) {
+      const child = JSON.parse(JSON.stringify(template)) as typeof template;
+      const suffix = String(index).padStart(2, "0");
+      Object.assign(child.value, {
+        id: `CROWDED-${suffix}`,
+        occurred_at: `2026-07-${String(index + 1).padStart(2, "0")}T10:00:00+02:00`,
+        recorded_at: `2026-07-${String(index + 1).padStart(2, "0")}T10:05:00+02:00`,
+        title: `Crowded direct child milestone ${suffix} with a long display title`,
+        parents: ["CORE-002"],
+        relations: [],
+      });
+      mutableMilestones.push(child);
+    }
+
+    mockApi(crowded);
+    const view = renderDetail("CORE-002");
+    expect(await screen.findByRole("heading", {
+      name: "A deliberately long accepted baseline milestone title that must wrap safely",
+    })).toBeVisible();
+    const region = screen.getByRole("region", { name: "Direct parent and child milestone topology" });
+    expect(Number(region.getAttribute("data-logical-height"))).toBeGreaterThan(384);
+    expect(view.container.querySelectorAll('[data-neighborhood-relation="child"]')).toHaveLength(12);
+    expect(view.container.querySelectorAll('[data-edge-source="CORE-002"]')).toHaveLength(12);
+    expect(screen.getByRole("heading", { name: "Parent milestones" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Child milestones" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Context" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Known limitations" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Visible amendments" })).toBeVisible();
+  });
+
+  it("updates detail and neighborhood through neighbor links and preserves route history", async () => {
+    mockApi(difficult);
+    const user = userEvent.setup();
+    const view = renderDetail("CORE-002");
+    await screen.findByRole("heading", { name: "Deterministic Baseline Accepted" });
+
+    await user.click(screen.getByRole("link", {
+      name: "Open child milestone: Executor Hypothesis Accepted (CORE-003)",
+    }));
+    expect(screen.getByLabelText("Current test route")).toHaveTextContent("/milestones/CORE-003");
+    expect(await screen.findByRole("heading", { name: "Executor Hypothesis Accepted" })).toBeVisible();
+    expect(screen.getByRole("img", {
+      name: "Current milestone: Executor Hypothesis Accepted (CORE-003)",
+    })).toHaveAttribute("data-neighborhood-id", "CORE-003");
+    expect(screen.getByRole("link", {
+      name: "Open parent milestone: Deterministic Baseline Accepted (CORE-002)",
+    })).toHaveAttribute("href", "/milestones/CORE-002");
+
+    await user.click(screen.getByRole("button", { name: "Test route back" }));
+    expect(await screen.findByRole("heading", { name: "Deterministic Baseline Accepted" })).toBeVisible();
+    expect(screen.getByLabelText("Current test route")).toHaveTextContent("/milestones/CORE-002");
+    expect(screen.getByRole("img", {
+      name: "Current milestone: Deterministic Baseline Accepted (CORE-002)",
+    })).toBeVisible();
   });
 
   it("keeps developer and critic iterations subordinate to their human milestone", async () => {
@@ -148,8 +246,10 @@ describe("milestone detail", () => {
     await screen.findByRole("heading", { name: "Deterministic Baseline Accepted" });
 
     await user.tab();
+    expect(document.activeElement).toHaveAttribute("aria-label", "Direct parent and child milestone topology");
+    await user.tab();
     expect(document.activeElement).toHaveAttribute("href", "/milestones/CORE-001");
-    for (let attempts = 0; attempts < 10 && document.activeElement?.textContent !== "Open safe preview"; attempts += 1) await user.tab();
+    for (let attempts = 0; attempts < 20 && document.activeElement?.textContent !== "Open safe preview"; attempts += 1) await user.tab();
     expect(document.activeElement).toHaveTextContent("Open safe preview");
   });
 

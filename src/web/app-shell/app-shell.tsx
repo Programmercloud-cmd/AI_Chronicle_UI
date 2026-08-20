@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { CurrentPage, RoadmapPage } from "../current-roadmap";
 import { MilestoneDetailPage } from "../detail";
 import { HistoryPage } from "../history";
+import { HistoryCameraSessionProvider } from "../history/history-camera-session";
 import { SnapshotProvider, useSnapshot } from "./snapshot";
 import { ThemeProvider, useTheme } from "./theme";
 
@@ -12,6 +13,11 @@ const NAV_ITEMS = [
   { to: "/history", label: "History", end: false },
   { to: "/roadmap", label: "Roadmap", end: false },
 ] as const;
+
+export function canNavigateBackWithinChronicle(): boolean {
+  const index = window.history.state?.idx;
+  return typeof index === "number" && Number.isFinite(index) && index > 0;
+}
 
 function LoadingState() {
   return (
@@ -98,17 +104,37 @@ function MainContent() {
 function AppFrame() {
   const { state } = useSnapshot();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const projectTitle = state.status === "ready"
     ? state.snapshot.project.value.project.title
     : "Project Chronicle";
+
+  const navigateBack = () => {
+    if (canNavigateBackWithinChronicle()) {
+      void navigate(-1);
+      return;
+    }
+    void navigate("/history", { replace: true });
+  };
 
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header className="site-header">
-        <div className="brand" aria-label="Chronicle project">
-          <span className="brand-mark" aria-hidden="true">C</span>
-          <span>{projectTitle}</span>
+        <div className="header-start">
+          <button
+            className="back-control"
+            type="button"
+            aria-label="Back"
+            title="Back"
+            onClick={navigateBack}
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <div className="brand" aria-label="Chronicle project">
+            <span className="brand-mark" aria-hidden="true">C</span>
+            <span>{projectTitle}</span>
+          </div>
         </div>
         <nav aria-label="Primary navigation">
           {NAV_ITEMS.map((item) => (
@@ -135,7 +161,9 @@ export function AppShell() {
   return (
     <ThemeProvider>
       <SnapshotProvider>
-        <AppFrame />
+        <HistoryCameraSessionProvider>
+          <AppFrame />
+        </HistoryCameraSessionProvider>
       </SnapshotProvider>
     </ThemeProvider>
   );

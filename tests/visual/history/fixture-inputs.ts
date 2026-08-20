@@ -44,6 +44,33 @@ export function visualFixture(name: string): TimelineLayoutInput {
       projection: [],
     };
   }
+  if (name === "four-branch") {
+    return {
+      displayTimeZone: "UTC",
+      branches: [
+        { id: "BR-01", title: "Main line" },
+        { id: "BR-02", title: "Timing path" },
+        { id: "BR-03", title: "Executor path" },
+        { id: "BR-04", title: "Recovery path" },
+      ],
+      milestones: [
+        milestone("M-001", 1, "BR-01", []),
+        milestone("M-002", 2, "BR-01", ["M-001"]),
+        milestone("M-003", 3, "BR-01", ["M-002"]),
+        milestone("T-001", 5, "BR-02", ["M-002"]),
+        milestone("T-002", 7, "BR-02", ["T-001"]),
+        milestone("E-001", 8, "BR-03", ["M-003"]),
+        milestone("E-002", 10, "BR-03", ["E-001"]),
+        milestone("R-001", 12, "BR-04", ["T-001"]),
+        milestone("R-002", 15, "BR-04", ["R-001", "E-002"]),
+      ],
+      current: { milestoneId: "R-002", state: "Four-branch recovery accepted" },
+      projection: [
+        { id: "RM-401", title: "Recovery benchmark", status: "active", branchId: "BR-04", plannedFor: "2026-06-10" },
+        { id: "RM-402", title: "Recovery release", status: "pending", branchId: "BR-04", plannedFor: "2026-06-24" },
+      ],
+    };
+  }
   if (name === "multibranch") {
     return {
       displayTimeZone: "UTC",

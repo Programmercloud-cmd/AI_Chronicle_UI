@@ -2,12 +2,12 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { BrowserRouter, Link, MemoryRouter, useLocation } from "react-router-dom";
 
-import { AppShell } from "../../../src/web/app-shell/app-shell";
+import { AppShell, canNavigateBackWithinChronicle } from "../../../src/web/app-shell/app-shell";
 import { SnapshotProvider, useSnapshot } from "../../../src/web/app-shell/snapshot";
 
 function snapshot(title = "Canonical Chronicle") {
@@ -45,6 +45,34 @@ function renderShell(initialPath = "/") {
   );
 }
 
+function BrowserNavigationProbe() {
+  const location = useLocation();
+  return (
+    <aside aria-label="Navigation test controls">
+      <Link to="/milestones/A">Open A</Link>
+      <Link to="/milestones/B">Open B</Link>
+      <output aria-label="Current path">{location.pathname}</output>
+    </aside>
+  );
+}
+
+function renderBrowserShell(initialPath = "/") {
+  window.history.replaceState(null, "", initialPath);
+  return render(
+    <BrowserRouter>
+      <AppShell />
+      <BrowserNavigationProbe />
+    </BrowserRouter>,
+  );
+}
+
+async function nativeHistoryBack() {
+  await act(async () => {
+    window.history.back();
+    await new Promise((resolve) => window.addEventListener("popstate", resolve, { once: true }));
+  });
+}
+
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
   return {
@@ -79,6 +107,21 @@ describe("app shell", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it("accepts only a finite positive router-managed history index", () => {
+    for (const [index, expected] of [
+      [1, true],
+      [0, false],
+      [-1, false],
+      [Number.NaN, false],
+      [Number.POSITIVE_INFINITY, false],
+      ["1", false],
+      [undefined, false],
+    ] as const) {
+      window.history.replaceState(index === undefined ? null : { idx: index }, "", "/");
+      expect(canNavigateBackWithinChronicle()).toBe(expected);
+    }
   });
 
   it("loads one immutable snapshot and retains it across shell navigation", async () => {
@@ -159,5 +202,61 @@ describe("app shell", () => {
     await user.click(screen.getByRole("button", { name: "Use light theme" }));
     await waitFor(() => expect(document.documentElement).toHaveAttribute("data-theme", "light"));
     expect(window.localStorage.getItem("chronicle-theme-v1")).toBe("light");
+  });
+
+  it("uses router history for an in-app Chronicle Back action", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(snapshot())));
+    const user = userEvent.setup();
+    renderBrowserShell();
+
+    await screen.findByRole("heading", { name: "Current" });
+    await user.click(screen.getByRole("link", { name: "Open A" }));
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/milestones/A"));
+    await user.click(screen.getByRole("link", { name: "Open B" }));
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/milestones/B"));
+    expect(canNavigateBackWithinChronicle()).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/milestones/A"));
+  });
+
+  it("replaces a direct-load entry with History and does not create a fallback loop", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(snapshot())));
+    const user = userEvent.setup();
+    renderBrowserShell("/milestones/B");
+
+    await screen.findByRole("heading", { name: "Milestone not found" });
+    expect(canNavigateBackWithinChronicle()).toBe(false);
+    const back = screen.getByRole("button", { name: "Back" });
+    expect(back).toHaveAttribute("title", "Back");
+
+    await user.tab();
+    await user.tab();
+    expect(back).toHaveFocus();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/history"));
+    expect(canNavigateBackWithinChronicle()).toBe(false);
+
+    await user.click(back);
+    expect(screen.getByLabelText("Current path")).toHaveTextContent("/history");
+    expect(canNavigateBackWithinChronicle()).toBe(false);
+  });
+
+  it("keeps native POP and Chronicle Back navigation interoperable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(snapshot())));
+    const user = userEvent.setup();
+    renderBrowserShell();
+
+    await screen.findByRole("heading", { name: "Current" });
+    await user.click(screen.getByRole("link", { name: "Open A" }));
+    await user.click(screen.getByRole("link", { name: "Open B" }));
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/milestones/B"));
+
+    await nativeHistoryBack();
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/milestones/A"));
+    expect(canNavigateBackWithinChronicle()).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    await waitFor(() => expect(screen.getByLabelText("Current path")).toHaveTextContent("/"));
   });
 });

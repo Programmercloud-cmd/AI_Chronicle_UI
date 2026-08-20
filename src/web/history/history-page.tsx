@@ -1,11 +1,14 @@
 import { useMemo } from "react";
 
 import { useSnapshot } from "../app-shell/snapshot";
+import { cameraResetKey } from "./history-content-bounds";
+import { useHistoryCameraSession } from "./history-camera-session";
 import { historyLayoutFromSnapshot } from "./history-data";
 import { HistoryView } from "./history-view";
 
 export function HistoryPage() {
   const { state } = useSnapshot();
+  const cameraSession = useHistoryCameraSession();
   const result = useMemo(
     () => state.status === "ready" ? historyLayoutFromSnapshot(state.snapshot) : undefined,
     [state],
@@ -28,5 +31,12 @@ export function HistoryPage() {
       </section>
     );
   }
-  return <HistoryView layout={result.value} />;
+  const resetKey = result.value.nodes.length === 0 ? undefined : cameraResetKey(result.value);
+  return (
+    <HistoryView
+      layout={result.value}
+      restoredCameraSnapshot={resetKey === undefined ? undefined : cameraSession.read(resetKey)}
+      onCameraCommit={cameraSession.commit}
+    />
+  );
 }

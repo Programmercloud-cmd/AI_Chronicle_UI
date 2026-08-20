@@ -8,6 +8,22 @@
   border-bottom: 1px solid var(--line);
 }
 
+.detail-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(18rem, 30vw, 22rem);
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: start;
+}
+
+.detail-hero-content,
+.detail-hero .milestone-neighborhood {
+  min-width: 0;
+}
+
+.detail-hero .milestone-neighborhood {
+  width: 100%;
+}
+
 .detail-row {
   display: flex;
   gap: 1rem;
@@ -20,9 +36,117 @@
   margin-bottom: 0;
 }
 
+.detail-row h1 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .detail-summary {
   max-width: 52rem;
   font-size: 1.12rem;
+}
+
+.milestone-neighborhood h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.milestone-neighborhood-scroll {
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+
+.milestone-neighborhood-scroll:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.milestone-neighborhood-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--text);
+}
+
+.milestone-neighborhood-column-labels {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.milestone-neighborhood-edges path {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.milestone-neighborhood-node-shape,
+.milestone-neighborhood-center-shape {
+  stroke: var(--line);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.milestone-neighborhood-node-shape {
+  fill: var(--background);
+}
+
+.milestone-neighborhood-center-shape {
+  fill: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.milestone-neighborhood-link {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.milestone-neighborhood-link:hover .milestone-neighborhood-node-shape {
+  fill: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  stroke: var(--accent);
+}
+
+.milestone-neighborhood-link:focus {
+  outline: none;
+}
+
+.milestone-neighborhood-link:focus-visible .milestone-neighborhood-node-shape {
+  fill: color-mix(in srgb, var(--focus) 10%, var(--surface));
+  stroke: var(--focus);
+  stroke-width: 3;
+}
+
+.milestone-neighborhood-node-title,
+.milestone-neighborhood-node-id,
+.milestone-neighborhood-current-label {
+  pointer-events: none;
+}
+
+.milestone-neighborhood-node-title {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.milestone-neighborhood-node-id {
+  fill: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 10.5px;
+}
+
+.milestone-neighborhood-current-label {
+  fill: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
 .status-chip {
@@ -146,6 +270,12 @@
   overflow: auto;
   border: 1px solid var(--line);
   border-top: 0;
+}
+
+@media (max-width: 860px) {
+  .detail-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {

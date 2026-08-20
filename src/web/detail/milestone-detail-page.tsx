@@ -4,6 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { useSnapshot, type PublicChronicleSnapshot } from "../app-shell/snapshot";
 import { ActualDiff } from "./actual-diff";
 import { EvidenceCard } from "./evidence-card";
+import { MilestoneNeighborhood } from "./milestone-neighborhood";
+import { buildMilestoneNeighborhood } from "./milestone-neighborhood-model";
 import "./detail.css";
 
 type Snapshot = PublicChronicleSnapshot;
@@ -104,6 +106,7 @@ export function MilestoneDetailPage() {
       evidenceById,
       revisionById,
       milestoneById,
+      neighborhood: buildMilestoneNeighborhood(snapshot, milestone.value.id),
     };
   }, [milestoneId, state]);
 
@@ -125,18 +128,23 @@ export function MilestoneDetailPage() {
   return (
     <article className="detail-page" aria-labelledby="milestone-title">
       <header className="detail-hero">
-        <p className="eyebrow">Milestone detail</p>
-        <div className="detail-row">
-          <h1 id="milestone-title">{milestone.value.title}</h1>
-          <span className={`status-chip status-${milestone.value.status}`}>{milestone.value.status}</span>
+        <div className="detail-hero-grid">
+          <div className="detail-hero-content">
+            <p className="eyebrow">Milestone detail</p>
+            <div className="detail-row">
+              <h1 id="milestone-title">{milestone.value.title}</h1>
+              <span className={`status-chip status-${milestone.value.status}`}>{milestone.value.status}</span>
+            </div>
+            <p className="detail-summary">{milestone.value.summary}</p>
+            <dl className="milestone-metadata">
+              <dt>Stable ID</dt><dd><code>{milestone.value.id}</code></dd>
+              <dt>Occurred</dt><dd><time dateTime={milestone.value.occurred_at}>{milestone.value.occurred_at}</time></dd>
+              <dt>Recorded</dt><dd><time dateTime={milestone.value.recorded_at}>{milestone.value.recorded_at}</time></dd>
+              <dt>Branch</dt><dd>{branch?.value.title ?? milestone.value.branch_id} <code>{milestone.value.branch_id}</code></dd>
+            </dl>
+          </div>
+          {view.neighborhood === undefined ? null : <MilestoneNeighborhood model={view.neighborhood} />}
         </div>
-        <p className="detail-summary">{milestone.value.summary}</p>
-        <dl className="milestone-metadata">
-          <dt>Stable ID</dt><dd><code>{milestone.value.id}</code></dd>
-          <dt>Occurred</dt><dd><time dateTime={milestone.value.occurred_at}>{milestone.value.occurred_at}</time></dd>
-          <dt>Recorded</dt><dd><time dateTime={milestone.value.recorded_at}>{milestone.value.recorded_at}</time></dd>
-          <dt>Branch</dt><dd>{branch?.value.title ?? milestone.value.branch_id} <code>{milestone.value.branch_id}</code></dd>
-        </dl>
       </header>
 
       {details?.context === undefined ? null : <section className="detail-section"><h2>Context</h2><p>{details.context}</p></section>}
