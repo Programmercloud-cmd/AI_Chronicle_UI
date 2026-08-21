@@ -26,6 +26,11 @@ import {
   type HistoryViewProps,
 } from "../../../src/web/history/history-view";
 import {
+  captureHistoryFullscreenSession,
+  historyFullscreenFramingFactor,
+  transitionHistoryCameraForFullscreen,
+} from "../../../src/web/history/history-fullscreen-camera";
+import {
   HistoryCameraSessionProvider,
   useHistoryCameraSession,
   type HistoryCameraSnapshot,
@@ -235,6 +240,15 @@ function dispatchNativeWheel(
   return event;
 }
 
+function zoomHistoryIn(surface: HTMLElement, deltaY = -500): void {
+  dispatchNativeWheel(surface, {
+    deltaY,
+    clientX: DEFAULT_VIEWPORT.width / 2,
+    clientY: DEFAULT_VIEWPORT.height / 2,
+  });
+  flushAnimationFrames();
+}
+
 function fixedSurfaceRect(
   surface: HTMLElement,
   rect: { left?: number; top?: number; width?: number; height?: number } = {},
@@ -383,6 +397,8 @@ describe("History view camera lifecycle", () => {
     for (const invalid of [
       { width: -1, height: 560 },
       { width: 0, height: 560 },
+      { width: 47.999, height: 560 },
+      { width: 48, height: 560 },
       { width: Number.NaN, height: 560 },
       { width: Number.POSITIVE_INFINITY, height: 560 },
       { width: 900, height: -1 },
@@ -500,6 +516,7 @@ describe("History view camera lifecycle", () => {
     const mainCapture = installPointerCapture(surface);
     const minimap = screen.getByTestId("history-minimap") as unknown as SVGSVGElement;
     fixedMinimapRect(minimap);
+    zoomHistoryIn(surface);
     const constraints = canonicalCamera(layout, DEFAULT_VIEWPORT);
     const projection = createMinimapProjection(constraints.navigationBounds);
     const canonicalHistoryCamera: HistoryCamera = {
@@ -1020,7 +1037,7 @@ describe("History view camera lifecycle", () => {
     const changed: TimelineLayout = {
       ...layout,
       nodes: layout.nodes.map((node) => node.treatment === "current"
-        ? { ...node, x: node.x + 500 }
+        ? { ...node, x: node.x + 3_000 }
         : node),
     };
 
@@ -1158,7 +1175,7 @@ describe("History view camera lifecycle", () => {
     expect(transitionHistoryCameraForResize({ ...manual, scale: 99 }, layout, viewport).scale).toBe(4);
   });
 
-  it("preserves fullscreen pose exactly and expands constraints to contain its visible rectangle", () => {
+  it("hydrates a stored pose exactly and expands constraints to contain its visible rectangle", () => {
     const layout = canonicalHistoryLayout();
     const viewport = { width: 2_560, height: 1_440 };
     const camera: HistoryCamera = {
@@ -2013,7 +2030,10 @@ describe("History view camera lifecycle", () => {
     expect(animationFrames.size).toBe(0);
     expect(screen.queryByTestId("history-selection-rectangle")).not.toBeInTheDocument();
     expect(capture.releasePointerCapture).toHaveBeenCalledWith(92);
-    expect(canvas).toHaveAttribute("viewBox", historyCameraViewBox(expected));
+    const actual = historyCameraFromRenderedViewBox(view.container, DEFAULT_VIEWPORT);
+    expect(actual.centerX).toBeCloseTo(expected.centerX, 12);
+    expect(actual.centerY).toBeCloseTo(expected.centerY, 12);
+    expect(actual.scale).toBeCloseTo(expected.scale, 12);
   });
 
   it.each([
@@ -2106,7 +2126,10 @@ describe("History view camera lifecycle", () => {
       viewportHeight: DEFAULT_VIEWPORT.height,
       mode: "manual",
     };
-    expect(canvas).toHaveAttribute("viewBox", historyCameraViewBox(expected));
+    const actual = historyCameraFromRenderedViewBox(view.container, DEFAULT_VIEWPORT);
+    expect(actual.centerX).toBeCloseTo(expected.centerX, 12);
+    expect(actual.centerY).toBeCloseTo(expected.centerY, 12);
+    expect(actual.scale).toBeCloseTo(expected.scale, 12);
     expect(screen.queryByTestId("history-selection-rectangle")).not.toBeInTheDocument();
   });
 
@@ -2545,6 +2568,7 @@ describe("History view camera lifecycle", () => {
     const view = renderHistory(layout);
     measure();
     const surface = screen.getByLabelText("Navigable project history timeline");
+    zoomHistoryIn(surface);
     const initial = viewBoxCameraCenter(view.container);
     const scale = DEFAULT_VIEWPORT.width / initial.width;
 
@@ -2650,7 +2674,7 @@ describe("History view camera lifecycle", () => {
     expect(containerScrollTo).not.toHaveBeenCalled();
   });
 
-  it("derives fullscreen state from fullscreenchange and preserves center and scale through entry, resize, and exit", () => {
+  it("derives fullscreen state from fullscreenchange and frames normalized zoom through entry, resize, and exit", () => {
     const view = renderHistory();
     measure();
     const surface = screen.getByLabelText("Navigable project history timeline");
@@ -2679,15 +2703,26 @@ describe("History view camera lifecycle", () => {
     measure(fullscreenViewport);
     dispatchFullscreenChange(surface);
     const entered = viewBoxCameraCenter(view.container);
+    const entryFactor = historyFullscreenFramingFactor(DEFAULT_VIEWPORT, fullscreenViewport);
     expect(entered.x).toBeCloseTo(before.x, 10);
     expect(entered.y).toBeCloseTo(before.y, 10);
-    expect(fullscreenViewport.width / entered.width).toBeCloseTo(beforeScale, 10);
-    const enteredTransition = transitionHistoryCameraPreservingPose(
+    expect(fullscreenViewport.width / entered.width).toBeCloseTo(beforeScale * entryFactor, 10);
+    const baselineConstraints = canonicalCamera(canonicalHistoryLayout(), DEFAULT_VIEWPORT);
+    const fullscreenSession = captureHistoryFullscreenSession(
       beforeCamera,
+      baselineConstraints.minScale,
+      baselineConstraints.maxScale,
+    );
+    const enteredTransition = transitionHistoryCameraForFullscreen(
+      fullscreenSession,
       canonicalHistoryLayout(),
       fullscreenViewport,
     );
-    expectIntegratedMinimapRect(minimap, enteredTransition.camera, enteredTransition.navigationBounds);
+    expectIntegratedMinimapRect(
+      minimap,
+      { ...enteredTransition.pose, viewportWidth: fullscreenViewport.width, viewportHeight: fullscreenViewport.height, mode: "manual" },
+      enteredTransition.navigationBounds,
+    );
     expect(screen.getByRole("button", { name: "Exit fullscreen (Esc)" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -2701,15 +2736,20 @@ describe("History view camera lifecycle", () => {
     const resizedFullscreen = { width: 2_560, height: 1_440 };
     measure(resizedFullscreen);
     const resized = viewBoxCameraCenter(view.container);
+    const resizedFactor = historyFullscreenFramingFactor(DEFAULT_VIEWPORT, resizedFullscreen);
     expect(resized.x).toBeCloseTo(before.x, 10);
     expect(resized.y).toBeCloseTo(before.y, 10);
-    expect(resizedFullscreen.width / resized.width).toBeCloseTo(beforeScale, 10);
-    const resizedTransition = transitionHistoryCameraPreservingPose(
-      enteredTransition.camera,
+    expect(resizedFullscreen.width / resized.width).toBeCloseTo(beforeScale * resizedFactor, 10);
+    const resizedTransition = transitionHistoryCameraForFullscreen(
+      fullscreenSession,
       canonicalHistoryLayout(),
       resizedFullscreen,
     );
-    expectIntegratedMinimapRect(minimap, resizedTransition.camera, resizedTransition.navigationBounds);
+    expectIntegratedMinimapRect(
+      minimap,
+      { ...resizedTransition.pose, viewportWidth: resizedFullscreen.width, viewportHeight: resizedFullscreen.height, mode: "manual" },
+      resizedTransition.navigationBounds,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Exit fullscreen (Esc)" }));
     expect(exitFullscreenMock).toHaveBeenCalledOnce();
@@ -2728,6 +2768,131 @@ describe("History view camera lifecycle", () => {
       "false",
     );
     expect(screen.getByRole("status")).toHaveTextContent(/^History fullscreen exited$/u);
+  });
+
+  it("normalizes fullscreen wheel zoom across repeated resizes and captures a fresh second-entry baseline", () => {
+    const layout = canonicalHistoryLayout();
+    const view = renderHistory(layout);
+    measure();
+    const surface = screen.getByLabelText("Navigable project history timeline");
+    fireEvent.keyDown(surface, { key: "ArrowLeft" });
+    const preview = historyCameraFromRenderedViewBox(view.container, DEFAULT_VIEWPORT);
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen (Shift+F)" }));
+    const firstFullscreen = { width: 1_920, height: 1_080 };
+    mockFullscreenElement = surface;
+    measure(firstFullscreen);
+    dispatchFullscreenChange(surface);
+    dispatchNativeWheel(surface, {
+      deltaY: -180,
+      clientX: firstFullscreen.width / 2,
+      clientY: firstFullscreen.height / 2,
+    });
+    flushAnimationFrames();
+    const zoomed = historyCameraFromRenderedViewBox(view.container, firstFullscreen);
+    const normalizedZoom = zoomed.scale / historyFullscreenFramingFactor(DEFAULT_VIEWPORT, firstFullscreen);
+
+    const resizedFullscreen = { width: 2_560, height: 1_440 };
+    measure(resizedFullscreen);
+    const resized = historyCameraFromRenderedViewBox(view.container, resizedFullscreen);
+    expect(resized.centerX).toBeCloseTo(zoomed.centerX, 10);
+    expect(resized.centerY).toBeCloseTo(zoomed.centerY, 10);
+    expect(resized.scale).toBeCloseTo(
+      normalizedZoom * historyFullscreenFramingFactor(DEFAULT_VIEWPORT, resizedFullscreen),
+      10,
+    );
+
+    mockFullscreenElement = null;
+    measure(DEFAULT_VIEWPORT);
+    dispatchFullscreenChange(null);
+    const exited = historyCameraFromRenderedViewBox(view.container, DEFAULT_VIEWPORT);
+    expect(exited.centerX).toBeCloseTo(zoomed.centerX, 10);
+    expect(exited.centerY).toBeCloseTo(zoomed.centerY, 10);
+    expect(exited.scale).toBeCloseTo(normalizedZoom, 10);
+    expect(exited.scale).toBeGreaterThan(preview.scale);
+
+    const resizedPreview = { width: 1_180, height: 690 };
+    measure(resizedPreview);
+    const secondBaseline = historyCameraFromRenderedViewBox(view.container, resizedPreview);
+    fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen (Shift+F)" }));
+    mockFullscreenElement = surface;
+    measure(firstFullscreen);
+    dispatchFullscreenChange(surface);
+    const secondEntry = historyCameraFromRenderedViewBox(view.container, firstFullscreen);
+    expect(secondEntry.centerX).toBeCloseTo(secondBaseline.centerX, 10);
+    expect(secondEntry.centerY).toBeCloseTo(secondBaseline.centerY, 10);
+    expect(secondEntry.scale).toBeCloseTo(
+      secondBaseline.scale * historyFullscreenFramingFactor(resizedPreview, firstFullscreen),
+      10,
+    );
+    expect(secondEntry.scale).not.toBeCloseTo(
+      secondBaseline.scale * historyFullscreenFramingFactor(DEFAULT_VIEWPORT, firstFullscreen),
+      6,
+    );
+  });
+
+  it("restores and disposes a fullscreen session when exit emits no resize measurement", () => {
+    const layout = canonicalHistoryLayout();
+    const view = renderHistory(layout);
+    measure();
+    const surface = screen.getByLabelText("Navigable project history timeline");
+    zoomHistoryIn(surface, -320);
+    fireEvent.keyDown(surface, { key: "ArrowLeft" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen (Shift+F)" }));
+    const fullscreenViewport = { width: 1_920, height: 1_080 };
+    mockFullscreenElement = surface;
+    measure(fullscreenViewport);
+    dispatchFullscreenChange(surface);
+    dispatchNativeWheel(surface, {
+      deltaY: -180,
+      clientX: fullscreenViewport.width / 2,
+      clientY: fullscreenViewport.height / 2,
+    });
+    flushAnimationFrames();
+    fireEvent.keyDown(surface, { key: "ArrowRight" });
+    const fullscreenCamera = historyCameraFromRenderedViewBox(view.container, fullscreenViewport);
+    const normalizedZoom = fullscreenCamera.scale /
+      historyFullscreenFramingFactor(DEFAULT_VIEWPORT, fullscreenViewport);
+
+    const eventOnlyPreview = { width: 1_376, height: 558 };
+    Object.defineProperties(surface, {
+      clientWidth: { configurable: true, value: eventOnlyPreview.width },
+      clientHeight: { configurable: true, value: eventOnlyPreview.height },
+    });
+    fixedSurfaceRect(surface, {
+      width: eventOnlyPreview.width,
+      height: eventOnlyPreview.height + 2,
+    });
+    dispatchFullscreenChange(null);
+
+    const restored = historyCameraFromRenderedViewBox(view.container, eventOnlyPreview);
+    expect(restored.centerX).toBeCloseTo(fullscreenCamera.centerX, 10);
+    expect(restored.centerY).toBeCloseTo(fullscreenCamera.centerY, 10);
+    expect(restored.scale).toBeCloseTo(normalizedZoom, 10);
+    expect(screen.getByRole("button", { name: "Enter fullscreen (Shift+F)" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fit current (F)" }));
+    expect(view.container.querySelector(".history-canvas")).toHaveAttribute(
+      "viewBox",
+      expectedCanonicalViewBox(layout, eventOnlyPreview),
+    );
+    const fittedPreview = historyCameraFromRenderedViewBox(view.container, eventOnlyPreview);
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen (Shift+F)" }));
+    mockFullscreenElement = surface;
+    measure(fullscreenViewport);
+    dispatchFullscreenChange(surface);
+    const secondEntry = historyCameraFromRenderedViewBox(view.container, fullscreenViewport);
+    expect(secondEntry.centerX).toBeCloseTo(fittedPreview.centerX, 10);
+    expect(secondEntry.centerY).toBeCloseTo(fittedPreview.centerY, 10);
+    expect(secondEntry.scale).toBeCloseTo(
+      fittedPreview.scale * historyFullscreenFramingFactor(eventOnlyPreview, fullscreenViewport),
+      10,
+    );
   });
 
   it("preserves pose when browser exit resize arrives before fullscreenchange", () => {
@@ -2935,10 +3100,13 @@ describe("History view camera lifecycle", () => {
     flushAnimationFrames();
     expect(view.container.querySelector("svg")).toHaveAttribute("viewBox", canonicalViewBox);
 
+    zoomHistoryIn(surface);
+    const zoomedCenter = viewBoxCameraCenter(view.container);
+    const zoomedScale = DEFAULT_VIEWPORT.width / zoomedCenter.width;
     expect(fireEvent.keyDown(surface, { key: "ArrowLeft" })).toBe(false);
     const afterArrow = viewBoxCameraCenter(view.container);
-    expect(afterArrow.x).toBeCloseTo(canonicalCenter.x - 48 / canonicalScale, 10);
-    expect(afterArrow.y).toBeCloseTo(canonicalCenter.y, 10);
+    expect(afterArrow.x).toBeCloseTo(zoomedCenter.x - 48 / zoomedScale, 10);
+    expect(afterArrow.y).toBeCloseTo(zoomedCenter.y, 10);
   });
 
   it("preserves a manual pan through presentation/theme/detail rerenders and transitions it from latest bounds on resize", async () => {
@@ -3037,10 +3205,12 @@ describe("History view camera lifecycle", () => {
     measure();
     const surface = screen.getByLabelText("Navigable project history timeline");
     const capture = installPointerCapture(surface);
+    zoomHistoryIn(surface);
     const initial = viewBoxCameraCenter(view.container);
     const initialViewBox = view.container.querySelector("svg")?.getAttribute("viewBox");
     const scale = DEFAULT_VIEWPORT.width / initial.width;
     const requestFrame = vi.mocked(requestAnimationFrame);
+    requestFrame.mockClear();
 
     fireEvent.pointerDown(surface, { pointerId: 10, button: 0, clientX: 100, clientY: 100 });
     fireEvent.pointerMove(surface, { pointerId: 10, clientX: 102, clientY: 104 });
@@ -3073,6 +3243,7 @@ describe("History view camera lifecycle", () => {
     measure();
     const surface = screen.getByLabelText("Navigable project history timeline");
     const capture = installPointerCapture(surface);
+    zoomHistoryIn(surface);
     const initial = viewBoxCameraCenter(view.container);
     const scale = DEFAULT_VIEWPORT.width / initial.width;
 
@@ -3103,6 +3274,7 @@ describe("History view camera lifecycle", () => {
     measure();
     const surface = screen.getByLabelText("Navigable project history timeline");
     const capture = installPointerCapture(surface);
+    zoomHistoryIn(surface);
     const initial = viewBoxCameraCenter(view.container);
     const scale = DEFAULT_VIEWPORT.width / initial.width;
 
@@ -3365,16 +3537,37 @@ describe("History view camera lifecycle", () => {
     expect(view.container.querySelector(".history-detail-surface")).not.toBeInTheDocument();
 
     await user.hover(milestone);
-    expect(view.container.querySelector(".history-detail-surface")).toBeVisible();
+    const detailSurface = view.container.querySelector(".history-detail-surface");
+    expect(detailSurface).toBeVisible();
+    expect(detailSurface?.parentElement).toBe(screen.getByLabelText("Navigable project history timeline"));
     expect(screen.getByText("Regression Introduced", { selector: "strong" })).toBeVisible();
     expect(screen.getByText("2026-04-20T16:47:21+02:00")).toBeVisible();
     expect(screen.getByText("Original path · BR-MAIN")).toBeVisible();
+    expect(screen.getByText("1", { selector: ".history-detail-surface dd" })).toBeVisible();
+    expect(screen.queryByText("Regression Introduced summary")).not.toBeInTheDocument();
 
     await user.unhover(milestone);
     expect(view.container.querySelector(".history-detail-surface")).not.toBeInTheDocument();
     fireEvent.focus(milestone);
     expect(view.container.querySelector(".history-detail-surface")).toBeVisible();
     expect(screen.getByText("Regression Introduced", { selector: "strong" })).toBeVisible();
+  });
+
+  it("shows concise projected details without milestone-only evidence", async () => {
+    const user = userEvent.setup();
+    const view = renderHistory();
+    measure();
+
+    await user.hover(screen.getByRole("link", { name: /RM-001/u }));
+
+    const detailSurface = view.container.querySelector(".history-detail-surface");
+    expect(detailSurface).toBeVisible();
+    expect(detailSurface).toHaveTextContent("Performance Benchmark");
+    expect(detailSurface).toHaveTextContent("Planned2026-05-18");
+    expect(detailSurface).toHaveTextContent("Statusactive");
+    expect(detailSurface).toHaveTextContent("Timing recovery · BR-TIMING");
+    expect(detailSurface).not.toHaveTextContent("Evidence");
+    expect(detailSurface).not.toHaveTextContent("Projected active roadmap item");
   });
 
   it("retains full long titles in accessible links when graph labels are shortened", () => {

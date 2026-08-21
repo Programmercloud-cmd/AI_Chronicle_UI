@@ -122,6 +122,78 @@ function viewBoxValues(value: string | null): [number, number, number, number] {
   return values as [number, number, number, number];
 }
 
+interface HoverGeometry {
+  readonly viewBox: string | null;
+  readonly surface: { x: number; y: number; width: number; height: number };
+  readonly canvas: { x: number; y: number; width: number; height: number };
+  readonly graph: { x: number; y: number; width: number; height: number };
+  readonly node: { x: number; y: number; width: number; height: number };
+}
+
+async function hoverGeometry(page: Page, nodeId: string): Promise<HoverGeometry> {
+  return page.evaluate((selectedNodeId) => {
+    const rectangle = (element: Element | null) => {
+      if (element === null) throw new Error("History hover geometry element is unavailable");
+      const bounds = element.getBoundingClientRect();
+      return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+    };
+    const canvas = document.querySelector(".history-canvas");
+    return {
+      viewBox: canvas?.getAttribute("viewBox") ?? null,
+      surface: rectangle(document.querySelector(".history-scroll")),
+      canvas: rectangle(canvas),
+      graph: rectangle(document.querySelector(".history-nodes")),
+      node: rectangle(document.querySelector(`[data-node-id='${selectedNodeId}']`)),
+    };
+  }, nodeId);
+}
+
+async function visibleGraphTextSafeArea(page: Page): Promise<{
+  count: number;
+  violations: { text: string; left: number; right: number }[];
+}> {
+  return page.evaluate(() => {
+    const surface = document.querySelector<HTMLElement>(".history-scroll");
+    if (surface === null) throw new Error("History surface is unavailable");
+    const viewport = surface.getBoundingClientRect();
+    const visible = [...document.querySelectorAll<SVGTextElement>(".history-canvas text")]
+      .map((element) => ({ element, bounds: element.getBoundingClientRect() }))
+      .filter(({ element, bounds }) => {
+        const style = getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden" &&
+          bounds.width > 0 && bounds.height > 0 &&
+          bounds.right > viewport.left && bounds.left < viewport.right &&
+          bounds.bottom > viewport.top && bounds.top < viewport.bottom;
+      });
+    const tolerance = 0.5;
+    return {
+      count: visible.length,
+      violations: visible
+        .filter(({ bounds }) =>
+          bounds.left < viewport.left + 24 - tolerance ||
+          bounds.right > viewport.right - 24 + tolerance)
+        .map(({ element, bounds }) => ({
+          text: element.textContent?.trim() ?? "",
+          left: bounds.left - viewport.left,
+          right: viewport.right - bounds.right,
+        })),
+    };
+  });
+}
+
+async function panHistoryToHorizontalLimit(
+  page: Page,
+  direction: "ArrowLeft" | "ArrowRight",
+): Promise<void> {
+  const surface = page.getByLabel("Navigable project history timeline");
+  await surface.focus();
+  for (let index = 0; index < 80; index += 1) await surface.press(`Shift+${direction}`);
+  const canvas = page.locator(".history-canvas");
+  const atLimit = await canvas.getAttribute("viewBox");
+  await surface.press(`Shift+${direction}`);
+  await expect(canvas).toHaveAttribute("viewBox", atLimit ?? "");
+}
+
 for (const visualCase of CASES) {
   test(visualCase.name, async ({ page }) => {
     await openHistory(page, visualCase.fixture, visualCase.theme);
@@ -195,6 +267,85 @@ for (const responsive of [
     await page.emulateMedia({ reducedMotion: "reduce" });
     await openHistory(page, "canonical");
     await expect(page.locator(".history-page")).toHaveScreenshot(`${responsive.name}.png`);
+  });
+}
+
+for (const hoverCase of [
+  {
+    name: "canonical-desktop-light", fixture: "canonical", theme: "light" as const,
+    width: 1600, height: 1000, nodeId: "CORE-003", summaryNodeId: "CORE-003",
+  },
+  {
+    name: "canonical-desktop-dark", fixture: "canonical", theme: "dark" as const,
+    width: 1600, height: 1000, nodeId: "CORE-003", summaryNodeId: "CORE-003",
+  },
+  {
+    name: "long-label-narrow-light", fixture: "long-label", theme: "light" as const,
+    width: 320, height: 780, nodeId: "TIM-004", summaryNodeId: "TIM-002",
+  },
+  {
+    name: "long-label-narrow-dark", fixture: "long-label", theme: "dark" as const,
+    width: 320, height: 780, nodeId: "TIM-004", summaryNodeId: "TIM-002",
+  },
+] as const) {
+  test(`${hoverCase.name} keeps hover summary in screen space without moving the graph`, async ({ page }) => {
+    await page.setViewportSize({ width: hoverCase.width, height: hoverCase.height });
+    await openHistory(page, hoverCase.fixture, hoverCase.theme);
+    const nodeCore = page.locator(`[data-node-id='${hoverCase.nodeId}'] .history-node-core`);
+    const nodeBox = await nodeCore.boundingBox();
+    if (nodeBox === null) throw new Error("Hover target has no browser bounds");
+    const before = await hoverGeometry(page, hoverCase.nodeId);
+
+    await page.mouse.move(nodeBox.x + nodeBox.width / 2, nodeBox.y + nodeBox.height / 2);
+    const summary = page.locator(".history-detail-surface");
+    await expect(summary).toBeVisible();
+    const afterHover = await hoverGeometry(page, hoverCase.nodeId);
+    expect(afterHover).toEqual(before);
+
+    await page.mouse.move(nodeBox.x + nodeBox.width / 2 + 1, nodeBox.y + nodeBox.height / 2 + 1);
+    await expect(summary).toBeVisible();
+    expect(await hoverGeometry(page, hoverCase.nodeId)).toEqual(before);
+
+    const containment = await summary.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const descendants = [...element.querySelectorAll("*")];
+      const bounds = element.getBoundingClientRect();
+      const viewport = element.parentElement?.getBoundingClientRect();
+      return {
+        noHorizontalOverflow: element.scrollWidth <= element.clientWidth,
+        noVerticalOverflow: element.scrollHeight <= element.clientHeight,
+        pointerEvents: style.pointerEvents,
+        descendantPointerEvents: descendants.map((descendant) => getComputedStyle(descendant).pointerEvents),
+        contained: viewport !== undefined &&
+          bounds.left >= viewport.left && bounds.right <= viewport.right &&
+          bounds.top >= viewport.top && bounds.bottom <= viewport.bottom,
+      };
+    });
+    expect(containment).toEqual({
+      noHorizontalOverflow: true,
+      noVerticalOverflow: true,
+      pointerEvents: "none",
+      descendantPointerEvents: expect.arrayContaining(["none"]),
+      contained: true,
+    });
+    expect(containment.descendantPointerEvents.every((value) => value === "none")).toBe(true);
+    await page.mouse.move(before.surface.x + 4, before.surface.y + before.surface.height - 4);
+    await expect(summary).toHaveCount(0);
+    expect(await hoverGeometry(page, hoverCase.nodeId)).toEqual(before);
+
+    const summaryNode = page.locator(`[data-node-id='${hoverCase.summaryNodeId}'] a`);
+    await summaryNode.focus();
+    await expect(summary).toBeVisible();
+    expect(await hoverGeometry(page, hoverCase.nodeId)).toEqual(before);
+    const focusedContainment = await summary.evaluate((element) => ({
+      noHorizontalOverflow: element.scrollWidth <= element.clientWidth,
+      noVerticalOverflow: element.scrollHeight <= element.clientHeight,
+    }));
+    expect(focusedContainment).toEqual({ noHorizontalOverflow: true, noVerticalOverflow: true });
+    await expect(summary).toHaveScreenshot(`hover-summary-${hoverCase.name}.png`);
+    await page.getByLabel("Navigable project history timeline").focus();
+    await expect(summary).toHaveCount(0);
+    expect(await hoverGeometry(page, hoverCase.nodeId)).toEqual(before);
   });
 }
 
@@ -321,6 +472,60 @@ for (const fullscreenCase of [
       "aria-pressed",
       "false",
     );
+  });
+}
+
+for (const safeAreaCase of [
+  { name: "canonical desktop", fixture: "canonical", width: 1_440, height: 900 },
+  { name: "long-label constrained", fixture: "long-label", width: 800, height: 720 },
+] as const) {
+  test(`${safeAreaCase.name} fullscreen preserves normalized minimum and all-text safe areas`, async ({ page }) => {
+    await page.setViewportSize({ width: safeAreaCase.width, height: safeAreaCase.height });
+    await openHistory(page, safeAreaCase.fixture);
+    test.skip(!(await page.evaluate(() => document.fullscreenEnabled)), "Native fullscreen unavailable in runner");
+    const surface = page.getByLabel("Navigable project history timeline");
+    const canvas = page.locator(".history-canvas");
+    const previewSurface = await surface.boundingBox();
+    const previewViewBox = viewBoxValues(await canvas.getAttribute("viewBox"));
+    if (previewSurface === null) throw new Error("Preview History surface has no browser bounds");
+    const normalizedMinimum = previewSurface.width / previewViewBox[2];
+
+    await page.getByRole("button", { name: "Enter fullscreen (Shift+F)" }).click();
+    await expect.poll(() => surface.evaluate((element) => document.fullscreenElement === element)).toBe(true);
+    const fullscreenSurface = await surface.boundingBox();
+    if (fullscreenSurface === null) throw new Error("Fullscreen History surface has no browser bounds");
+    const framingFactor = Math.min(
+      fullscreenSurface.width / previewSurface.width,
+      fullscreenSurface.height / previewSurface.height,
+    );
+    const expectedMinimum = normalizedMinimum * framingFactor;
+
+    const center = {
+      x: fullscreenSurface.x + fullscreenSurface.width / 2,
+      y: fullscreenSurface.y + fullscreenSurface.height / 2,
+    };
+    await page.mouse.move(center.x, center.y);
+    await page.mouse.wheel(0, 8_000);
+    await expect.poll(async () => {
+      const values = viewBoxValues(await canvas.getAttribute("viewBox"));
+      return fullscreenSurface.width / values[2];
+    }).toBeCloseTo(expectedMinimum, 6);
+    const minimumViewBox = await canvas.getAttribute("viewBox");
+    await page.mouse.wheel(0, 8_000);
+    await expect(canvas).toHaveAttribute("viewBox", minimumViewBox ?? "");
+
+    await panHistoryToHorizontalLimit(page, "ArrowLeft");
+    const left = await visibleGraphTextSafeArea(page);
+    expect(left.count).toBeGreaterThan(0);
+    expect(left.violations, "left-limit visible graph text safe area").toEqual([]);
+
+    await panHistoryToHorizontalLimit(page, "ArrowRight");
+    const right = await visibleGraphTextSafeArea(page);
+    expect(right.count).toBeGreaterThan(0);
+    expect(right.violations, "right-limit visible graph text safe area").toEqual([]);
+
+    await page.getByRole("button", { name: "Exit fullscreen (Esc)" }).click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBe(null);
   });
 }
 

@@ -7,6 +7,7 @@ import type {
   TimelineNodeLayout,
 } from "../../timeline";
 import {
+  HISTORY_CAMERA_HORIZONTAL_SAFE_AREA,
   cameraResetKey,
   canonicalCamera,
 } from "./history-content-bounds";
@@ -19,6 +20,13 @@ import {
 } from "./history-render-metrics";
 import { HistoryMinimap } from "./history-minimap";
 import type { HistoryCameraSnapshot } from "./history-camera-session";
+import {
+  captureHistoryFullscreenSession,
+  restoreHistoryCameraFromFullscreen,
+  transitionHistoryCameraForFullscreen,
+  updateHistoryFullscreenSession,
+  type HistoryFullscreenSession,
+} from "./history-fullscreen-camera";
 import {
   clampCamera,
   screenToGraph,
@@ -99,10 +107,7 @@ export interface PosePreservingHistoryCameraTransition {
   maxScale: number;
 }
 
-/**
- * Changes only viewport-dependent camera data. Fullscreen must never turn a
- * viewport resize into an implicit fit or clamp the pose the user committed.
- */
+/** Changes viewport-dependent data while hydrating a stored preview pose. */
 export function transitionHistoryCameraPreservingPose(
   camera: HistoryCamera,
   layout: TimelineLayout,
@@ -303,8 +308,15 @@ export function fitHistoryCameraToScreenSelection(
 function validMeasuredViewport(width: number, height: number): boolean {
   return Number.isFinite(width) &&
     Number.isFinite(height) &&
-    width > 0 &&
+    width > HISTORY_CAMERA_HORIZONTAL_SAFE_AREA * 2 &&
     height > HISTORY_CAMERA_VERTICAL_PADDING * 2;
+}
+
+function measuredViewportFromSurface(surface: HTMLDivElement): ViewportSize | undefined {
+  const bounds = surface.getBoundingClientRect();
+  const width = surface.clientWidth > 0 ? surface.clientWidth : bounds.width;
+  const height = surface.clientHeight > 0 ? surface.clientHeight : bounds.height;
+  return validMeasuredViewport(width, height) ? { width, height } : undefined;
 }
 
 function cameraViewBox(camera: HistoryCamera): string {
@@ -383,7 +395,6 @@ function DetailSurface({ node }: { node: TimelineNodeLayout }) {
           <div><dt>Evidence</dt><dd>{node.accessibility.evidenceCount ?? 0}</dd></div>
         ) : null}
       </dl>
-      <p>{node.accessibility.description}</p>
     </aside>
   );
 }
@@ -512,9 +523,9 @@ export function HistoryView({
   const selectionAnimationFrameRef = useRef<number | undefined>(undefined);
   const isFullscreenRef = useRef(false);
   const fullscreenTransitionPendingRef = useRef(false);
-  const preserveNextExitResizeRef = useRef(false);
-  const preservePoseResizeRef = useRef(false);
-  const exitResizeObservedBeforeEventRef = useRef(false);
+  const fullscreenSessionRef = useRef<HistoryFullscreenSession | undefined>(undefined);
+  const fullscreenExitPendingRef = useRef(false);
+  const fullscreenExitViewportRef = useRef<ViewportSize | undefined>(undefined);
   const hasGraph = layout.nodes.length > 0;
   const resetKey = useMemo(
     () => hasGraph ? cameraResetKey(layout) : undefined,
@@ -533,7 +544,13 @@ export function HistoryView({
   const activeNode = activeId === undefined ? undefined : nodeById.get(activeId);
   const currentNode = layout.nodes.find((node) => node.treatment === "current");
 
-  function publishCamera(nextCamera: HistoryCamera): void {
+  function publishCamera(nextCamera: HistoryCamera, syncFullscreenSession = true): void {
+    if (syncFullscreenSession && fullscreenSessionRef.current !== undefined) {
+      fullscreenSessionRef.current = updateHistoryFullscreenSession(
+        fullscreenSessionRef.current,
+        nextCamera,
+      );
+    }
     cameraRef.current = nextCamera;
     setCamera(nextCamera);
     const committedResetKey = resetKeyRef.current;
@@ -546,6 +563,23 @@ export function HistoryView({
         mode: nextCamera.mode,
       });
     }
+  }
+
+  function captureFullscreenSession(): boolean {
+    const current = cameraRef.current;
+    const minScale = minScaleRef.current;
+    const maxScale = maxScaleRef.current;
+    if (current === undefined || minScale === undefined || maxScale === undefined) return false;
+    fullscreenSessionRef.current = captureHistoryFullscreenSession(current, minScale, maxScale);
+    fullscreenExitPendingRef.current = false;
+    fullscreenExitViewportRef.current = undefined;
+    return true;
+  }
+
+  function discardFullscreenSession(): void {
+    fullscreenSessionRef.current = undefined;
+    fullscreenExitPendingRef.current = false;
+    fullscreenExitViewportRef.current = undefined;
   }
 
   function releasePanCapture(gesture: HistoryPanGesture): void {
@@ -726,19 +760,9 @@ export function HistoryView({
       const { width, height } = entry.contentRect;
       if (!validMeasuredViewport(width, height)) return;
       const fullscreenNow = document.fullscreenElement === element;
-      if (!fullscreenNow && isFullscreenRef.current) {
-        exitResizeObservedBeforeEventRef.current = true;
-      }
-      if (
-        fullscreenNow ||
-        isFullscreenRef.current ||
-        fullscreenTransitionPendingRef.current ||
-        preserveNextExitResizeRef.current
-      ) {
-        preservePoseResizeRef.current = true;
-        if (!fullscreenNow && !isFullscreenRef.current) {
-          preserveNextExitResizeRef.current = false;
-        }
+      if (!fullscreenNow && isFullscreenRef.current && fullscreenSessionRef.current !== undefined) {
+        fullscreenExitPendingRef.current = true;
+        fullscreenExitViewportRef.current = { width, height };
       }
       setMeasuredViewport((previous) =>
         previous?.width === width && previous.height === height
@@ -764,10 +788,22 @@ export function HistoryView({
         fullscreenTransitionPendingRef.current = false;
         return;
       }
-      if (!fullscreenNow && !exitResizeObservedBeforeEventRef.current) {
-        preserveNextExitResizeRef.current = true;
+      if (fullscreenNow && fullscreenSessionRef.current === undefined) {
+        captureFullscreenSession();
+      } else if (!fullscreenNow && fullscreenSessionRef.current !== undefined) {
+        fullscreenExitPendingRef.current = true;
       }
-      exitResizeObservedBeforeEventRef.current = false;
+      if (!fullscreenNow && element !== null) {
+        const exitViewport = measuredViewportFromSurface(element);
+        if (exitViewport !== undefined) {
+          fullscreenExitViewportRef.current = exitViewport;
+          setMeasuredViewport((previous) =>
+            previous?.width === exitViewport.width && previous.height === exitViewport.height
+              ? previous
+              : exitViewport,
+          );
+        }
+      }
       fullscreenTransitionPendingRef.current = false;
       isFullscreenRef.current = fullscreenNow;
       setIsFullscreen(fullscreenNow);
@@ -800,6 +836,7 @@ export function HistoryView({
     discardPanResources(true);
     discardSelectionResources(true);
     if (resetKey === undefined) {
+      discardFullscreenSession();
       lastResetKeyRef.current = undefined;
       navigationBoundsRef.current = undefined;
       minScaleRef.current = undefined;
@@ -811,11 +848,10 @@ export function HistoryView({
     if (measuredViewport === undefined) return;
 
     const keyChanged = lastResetKeyRef.current !== resetKey;
+    if (keyChanged) discardFullscreenSession();
     lastResetKeyRef.current = resetKey;
     const currentLayout = layoutRef.current;
     const constraints = canonicalCamera(currentLayout, measuredViewport);
-    const preservePose = preservePoseResizeRef.current;
-    preservePoseResizeRef.current = false;
     const previous = cameraRef.current;
     const restored = previous === undefined &&
       restoredCameraSnapshot?.cameraResetKey === resetKey &&
@@ -835,15 +871,44 @@ export function HistoryView({
           viewportHeight: measuredViewport.height,
           mode: restored.mode,
         };
+    const element = viewportRef.current;
+    const fullscreenSession = fullscreenSessionRef.current;
+    const fullscreenNow = element !== null && document.fullscreenElement === element;
+    const fullscreenTransition = fullscreenSession !== undefined && fullscreenNow
+      ? transitionHistoryCameraForFullscreen(fullscreenSession, currentLayout, measuredViewport)
+      : undefined;
+    const restorationViewport = fullscreenSession !== undefined && !fullscreenNow
+      ? fullscreenExitViewportRef.current ?? (
+          !isFullscreenRef.current ? fullscreenSession.baselineViewport : measuredViewport
+        )
+      : measuredViewport;
+    const fullscreenRestoration = fullscreenSession !== undefined &&
+      !fullscreenNow &&
+      fullscreenExitPendingRef.current
+      ? restoreHistoryCameraFromFullscreen(fullscreenSession, currentLayout, restorationViewport)
+      : undefined;
     const poseTransition = restoredCamera !== undefined
       ? transitionHistoryCameraPreservingPose(restoredCamera, currentLayout, measuredViewport)
-      : preservePose && previous !== undefined && !keyChanged
-        ? transitionHistoryCameraPreservingPose(previous, currentLayout, measuredViewport)
-        : undefined;
-    navigationBoundsRef.current = poseTransition?.navigationBounds ?? constraints.navigationBounds;
-    minScaleRef.current = poseTransition?.minScale ?? constraints.minScale;
-    maxScaleRef.current = poseTransition?.maxScale ?? constraints.maxScale;
-    const next: HistoryCamera = restoredCamera !== undefined && poseTransition !== undefined
+      : undefined;
+    const activeTransition = fullscreenTransition ?? fullscreenRestoration ?? poseTransition;
+    navigationBoundsRef.current = activeTransition?.navigationBounds ?? constraints.navigationBounds;
+    minScaleRef.current = activeTransition?.minScale ?? constraints.minScale;
+    maxScaleRef.current = activeTransition?.maxScale ?? constraints.maxScale;
+    const next: HistoryCamera = fullscreenTransition !== undefined
+      ? {
+          ...fullscreenTransition.pose,
+          viewportWidth: measuredViewport.width,
+          viewportHeight: measuredViewport.height,
+          mode: fullscreenSession?.mode ?? "manual",
+        }
+      : fullscreenRestoration !== undefined
+        ? {
+            ...fullscreenRestoration.pose,
+            viewportWidth: restorationViewport.width,
+            viewportHeight: restorationViewport.height,
+            mode: fullscreenSession?.mode ?? "manual",
+          }
+      : restoredCamera !== undefined && poseTransition !== undefined
       ? { ...poseTransition.camera, mode: restoredCamera.mode }
       : previous === undefined || keyChanged
         ? {
@@ -852,12 +917,14 @@ export function HistoryView({
             viewportHeight: measuredViewport.height,
             mode: "canonical",
           }
-        : poseTransition?.camera ?? transitionHistoryCameraForResize(previous, currentLayout, measuredViewport);
-    publishCamera(next);
-  }, [resetKey, measuredViewport?.height, measuredViewport?.width]);
+        : transitionHistoryCameraForResize(previous, currentLayout, measuredViewport);
+    publishCamera(next, fullscreenRestoration === undefined);
+    if (fullscreenRestoration !== undefined) discardFullscreenSession();
+  }, [isFullscreen, resetKey, measuredViewport?.height, measuredViewport?.width]);
 
   useEffect(() => () => discardPanResources(false), []);
   useEffect(() => () => discardSelectionResources(false), []);
+  useEffect(() => () => discardFullscreenSession(), []);
 
   useEffect(() => {
     if (endingPanCameraRef.current === undefined || camera !== endingPanCameraRef.current) return;
@@ -877,15 +944,29 @@ export function HistoryView({
   function fitCurrent(focusSurface: boolean) {
     const element = viewportRef.current;
     if (currentNode === undefined || measuredViewport === undefined || element === null) return;
+    const fullscreenSession = fullscreenSessionRef.current;
     const canonical = canonicalCamera(layoutRef.current, measuredViewport);
-    navigationBoundsRef.current = canonical.navigationBounds;
-    minScaleRef.current = canonical.minScale;
-    maxScaleRef.current = canonical.maxScale;
+    const fittedSession = fullscreenSession === undefined
+      ? undefined
+      : {
+          ...fullscreenSession,
+          centerX: canonical.pose.centerX,
+          centerY: canonical.pose.centerY,
+          normalizedZoom: fullscreenSession.normalizedMinZoom,
+          mode: "canonical" as const,
+        };
+    const fullscreenFit = fittedSession === undefined
+      ? undefined
+      : transitionHistoryCameraForFullscreen(fittedSession, layoutRef.current, measuredViewport);
+    if (fittedSession !== undefined) fullscreenSessionRef.current = fittedSession;
+    navigationBoundsRef.current = fullscreenFit?.navigationBounds ?? canonical.navigationBounds;
+    minScaleRef.current = fullscreenFit?.minScale ?? canonical.minScale;
+    maxScaleRef.current = fullscreenFit?.maxScale ?? canonical.maxScale;
     discardWheelResources();
     discardPanResources(true);
     discardSelectionResources(true);
     const nextCamera: HistoryCamera = {
-      ...canonical.pose,
+      ...(fullscreenFit?.pose ?? canonical.pose),
       viewportWidth: measuredViewport.width,
       viewportHeight: measuredViewport.height,
       mode: "canonical",
@@ -900,6 +981,10 @@ export function HistoryView({
     const element = viewportRef.current;
     if (!fullscreenAvailable || element === null) return;
     const exiting = document.fullscreenElement === element;
+    if (!exiting) {
+      discardFullscreenSession();
+      if (!captureFullscreenSession()) return;
+    }
     fullscreenTransitionPendingRef.current = true;
     discardWheelResources();
     discardPanResources(true);
@@ -910,9 +995,13 @@ export function HistoryView({
       const transitionOccurred = exiting
         ? document.fullscreenElement !== element
         : document.fullscreenElement === element;
-      if (!transitionOccurred) fullscreenTransitionPendingRef.current = false;
+      if (!transitionOccurred) {
+        fullscreenTransitionPendingRef.current = false;
+        if (!exiting) discardFullscreenSession();
+      }
     } catch {
       fullscreenTransitionPendingRef.current = false;
+      if (!exiting) discardFullscreenSession();
       setFullscreenAnnouncement((previous) => ({
         version: (previous?.version ?? 0) + 1,
         message: exiting ? "Unable to exit fullscreen" : "Unable to enter fullscreen",
@@ -1216,7 +1305,6 @@ export function HistoryView({
           <button type="button" onClick={() => fitCurrent(true)}>Fit current (F)</button>
         )}
       </header>
-      {activeNode === undefined ? null : <DetailSurface node={activeNode} />}
       <p className="history-visually-hidden" role="status" aria-live="polite" aria-atomic="true">
         {fullscreenAnnouncement !== undefined ? (
           <span key={`fullscreen-${fullscreenAnnouncement.version}`}>{fullscreenAnnouncement.message}</span>
@@ -1332,6 +1420,7 @@ export function HistoryView({
             ))}
           </g>
         </svg>)}
+        {activeNode === undefined ? null : <DetailSurface node={activeNode} />}
         {screenSelection === undefined ? null : (
           <div
             className="history-selection-rectangle"

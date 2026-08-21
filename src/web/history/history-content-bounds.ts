@@ -34,6 +34,8 @@ export interface CanonicalHistoryCamera {
   currentNodeId?: string;
 }
 
+export const HISTORY_CAMERA_HORIZONTAL_SAFE_AREA = 24;
+
 type TextAnchor = "start" | "middle" | "end";
 
 function assertFinite(value: number, name: string): void {
@@ -352,38 +354,23 @@ export function canonicalCamera(
 ): CanonicalHistoryCamera {
   assertPositive(viewport.width, "viewport.width");
   assertPositive(viewport.height, "viewport.height");
+  const usableWidth = viewport.width - HISTORY_CAMERA_HORIZONTAL_SAFE_AREA * 2;
   const usableHeight = viewport.height - HISTORY_CAMERA_VERTICAL_PADDING * 2;
+  if (usableWidth <= 0) {
+    throw new RangeError(`viewport.width must exceed ${HISTORY_CAMERA_HORIZONTAL_SAFE_AREA * 2}`);
+  }
   if (usableHeight <= 0) {
     throw new RangeError(`viewport.height must exceed ${HISTORY_CAMERA_VERTICAL_PADDING * 2}`);
   }
 
   const contentBounds = historyContentBounds(layout);
+  const contentWidth = contentBounds.right - contentBounds.left;
   const contentHeight = contentBounds.bottom - contentBounds.top;
+  assertPositive(contentWidth, "meaningful content width");
   assertPositive(contentHeight, "meaningful content height");
-  const minScale = Math.min(1, usableHeight / contentHeight);
+  const minScale = Math.min(1, usableWidth / contentWidth, usableHeight / contentHeight);
   assertPositive(minScale, "minimum camera scale");
-  const derivedNavigationBounds = deriveNavigationBounds(contentBounds, viewport, minScale);
-  // deriveNavigationBounds intentionally creates an exactly fitting span on an
-  // undersized axis. Add only floating-point slack so G1's strict containment
-  // check cannot reject that mathematically valid span after subtraction.
-  const containmentSlack =
-    Number.EPSILON *
-    32 *
-    Math.max(
-      1,
-      Math.abs(derivedNavigationBounds.left),
-      Math.abs(derivedNavigationBounds.top),
-      Math.abs(derivedNavigationBounds.right),
-      Math.abs(derivedNavigationBounds.bottom),
-      viewport.width / minScale,
-      viewport.height / minScale,
-    );
-  const navigationBounds = {
-    left: derivedNavigationBounds.left - containmentSlack,
-    top: derivedNavigationBounds.top - containmentSlack,
-    right: derivedNavigationBounds.right + containmentSlack,
-    bottom: derivedNavigationBounds.bottom + containmentSlack,
-  };
+  const navigationBounds = historyNavigationBounds(contentBounds, viewport, minScale);
   const currentNodes = layout.nodes.filter((node) => node.treatment === "current");
   if (currentNodes.length > 1) throw new RangeError("layout must not contain multiple current nodes");
   const currentNode = currentNodes[0];
@@ -404,6 +391,51 @@ export function canonicalCamera(
     contentBounds,
     navigationBounds,
     ...(currentNode === undefined ? {} : { currentNodeId: currentNode.id }),
+  };
+}
+
+/**
+ * Navigation envelope shared by preview and fullscreen cameras. The horizontal
+ * padding is expressed in graph space at the effective minimum scale so every
+ * rendered History label retains at least 24 CSS pixels at either pan limit.
+ */
+export function historyNavigationBounds(
+  contentBounds: GraphRect,
+  viewport: ViewportSize,
+  minScale: number,
+): GraphRect {
+  assertPositive(minScale, "minimum camera scale");
+  const horizontalGraphPadding = HISTORY_CAMERA_HORIZONTAL_SAFE_AREA / minScale;
+  const derivedNavigationBounds = deriveNavigationBounds(
+    {
+      left: contentBounds.left - horizontalGraphPadding,
+      top: contentBounds.top,
+      right: contentBounds.right + horizontalGraphPadding,
+      bottom: contentBounds.bottom,
+    },
+    viewport,
+    minScale,
+  );
+  // deriveNavigationBounds can produce an exactly fitting span. Add only
+  // floating-point slack so clampCamera cannot reject a mathematically valid
+  // span after independent subtraction at the same scale.
+  const containmentSlack =
+    Number.EPSILON *
+    32 *
+    Math.max(
+      1,
+      Math.abs(derivedNavigationBounds.left),
+      Math.abs(derivedNavigationBounds.top),
+      Math.abs(derivedNavigationBounds.right),
+      Math.abs(derivedNavigationBounds.bottom),
+      viewport.width / minScale,
+      viewport.height / minScale,
+    );
+  return {
+    left: derivedNavigationBounds.left - containmentSlack,
+    top: derivedNavigationBounds.top - containmentSlack,
+    right: derivedNavigationBounds.right + containmentSlack,
+    bottom: derivedNavigationBounds.bottom + containmentSlack,
   };
 }
 
