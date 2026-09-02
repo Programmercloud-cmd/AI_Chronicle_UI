@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0006"
+captured_at: "2026-09-02T15:09:04+02:00"
+kind: "file"
+title: "Pinned merged History workflow"
+description: "Tracked main-line source at the merge that made CHR-002's owner-facing claim true."
+source:
+  kind: "repository_ref"
+  path: "src/web/history/history-view.tsx"
+  revision: "baa22a0594e33d82db91f40271192b8f474b8df7"
+origin:
+  tool: "git"
+  target_revision: "baa22a0594e33d82db91f40271192b8f474b8df7"

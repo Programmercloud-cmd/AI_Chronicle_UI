@@ -1,0 +1,32 @@
+schema_version: 1
+id: "CHR-003"
+occurred_at: "2026-09-02T15:55:39+02:00"
+recorded_at: "2026-09-02T15:55:57+02:00"
+title: "Tracked self-Chronicle accepted"
+summary: "Project Chronicle gained a validated, evidence-backed Chronicle of its own history, present state, and supported roadmap."
+branch_id: "BR-MAIN"
+parents:
+  - "CHR-002"
+status: "accepted"
+details:
+  context: "Durable project conclusions were distributed across tracked source and ignored gauntlet material, leaving no real Chronicle dataset for the product itself."
+  changed:
+    - "Added a tracked v1 Chronicle for Project Chronicle with conservative primary milestones and subordinate engineering events."
+    - "Consolidated compact accepted evidence into contained, hashed artifacts and pinned authoritative tracked source where appropriate."
+    - "Recorded only the supported human-orientation and native-Linux validation gaps as roadmap work, and corrected stale README claims."
+  unchanged:
+    - "Schemas, routes, APIs, dependencies, tests, and production behavior are unchanged."
+    - "Ignored contracts, reports, evidence, agent records, scratch files, and runs remain available locally."
+  acceptance_criteria:
+    - "The dataset validates without warnings and renders its Current, History, Roadmap, milestone, engineering-event, and evidence surfaces."
+    - "Every admitted milestone, timestamp, relation, evidence path, and hash passes independent critic review."
+    - "Implementation and repair noise remains subordinate to owner-relevant milestones."
+  results:
+    - "The independent critic accepted repair submission 1 after reproducing both milestone patches and verifying all artifact hashes."
+  known_limitations:
+    - "The five-person human orientation study remains pending."
+    - "Native Linux portability remains pending."
+  next_step: "Run the tracked human orientation study."
+evidence:
+  - "EVD-0011"
+

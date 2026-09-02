@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVT-000003"
+occurred_at: "2026-09-02T15:09:04+02:00"
+recorded_at: "2026-09-02T15:39:53+02:00"
+milestone_id: "CHR-002"
+kind: "integration"
+actor:
+  type: "tool"
+  role: "source_control"
+  label: "GitHub merge"
+outcome: "completed"
+summary: "Merged the repaired interactive History workflow into the tracked main line."
+details: "The merge made the reviewed History source durable on the tracked main line; the separate critic artifact records the acceptance and release verdict without assigning it an unsupported exact instant."
+evidence:
+  - "EVD-0006"
+  - "EVD-0007"

@@ -1,0 +1,10 @@
+schema_version: 1
+updated_at: "2026-09-02T15:55:57+02:00"
+milestone_id: "CHR-003"
+state: "Project Chronicle now has an accepted, tracked self-Chronicle; human orientation and native Linux validation remain outstanding."
+next_step: "Run the tracked five-person human orientation study."
+related_roadmap_items:
+  - "RM-001"
+  - "RM-002"
+history_projection:
+  - "RM-001"

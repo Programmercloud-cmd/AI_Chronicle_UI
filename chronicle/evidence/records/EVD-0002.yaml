@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0002"
+captured_at: "2026-09-02T15:39:53+02:00"
+kind: "file"
+title: "Accepted implementation dependency graph"
+description: "Compact record of the accepted v1 component gauntlets and their dependency order."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/dependency-graph.md"
+  media_type: "text/plain"
+  sha256: "9e0a2f180aea7aae5f48c887ba1cb3b7826764f237a64e697f1b5c5d751aee5a"
+origin:
+  tool: "Project Chronicle investigation"

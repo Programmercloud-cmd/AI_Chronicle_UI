@@ -1,0 +1,37 @@
+schema_version: 1
+id: "CHR-001"
+occurred_at: "2026-08-20T11:55:14+02:00"
+recorded_at: "2026-09-02T15:39:53+02:00"
+title: "Executable v1 foundation accepted"
+summary: "The portable data contract, safe runtime, deterministic viewer, fixtures, and release boundary became a coherent accepted product."
+branch_id: "BR-MAIN"
+parents: []
+status: "accepted"
+details:
+  context: "Project Chronicle needed a portable, inspectable source of truth and a secure local projection before later navigation work could matter."
+  changed:
+    - "Established the strict v1 YAML contract, loaders, semantic validation, guarded revisions, and hashed evidence model."
+    - "Added the localhost CLI/server and deterministic Current, History, Roadmap, milestone, evidence, and diff views."
+    - "Added canonical and difficult fixtures with schema, domain, integration, visual, packaging, and browser release checks."
+  acceptance_criteria:
+    - "The tracked product validates ordinary Chronicle directories without depending on browser storage or ignored development material."
+    - "The packaged local viewer preserves evidence safety and deterministic data semantics."
+  results:
+    - "The executable v1 foundation and its public operating boundary entered tracked source at one pinned commit."
+  known_limitations:
+    - "The five-person human orientation study had not been run."
+    - "Native Linux portability had not been validated."
+  next_step: "Improve how project owners orient themselves in large or branching histories."
+evidence:
+  - "EVD-0001"
+  - "EVD-0002"
+  - "EVD-0003"
+  - "EVD-0009"
+code_changes:
+  - diff_evidence_id: "EVD-0009"
+    why: "Establish a portable, validated Chronicle data model and a secure deterministic local viewer as one coherent v1 foundation."
+    previous_behavior: "The preceding tracked revision did not contain the executable Chronicle contract, schemas, runtime, viewer, fixtures, or release checks."
+    new_behavior: "The repository contains the v1 contract and schemas, safe loader and validator, CLI/server, deterministic UI, representative fixtures, and build, test, visual, browser, and package checks."
+    risks:
+      - "Strict validation can reject malformed or unsafe datasets that permissive readers might otherwise accept."
+      - "The local viewer's characterized scale and platform coverage remain bounded by the documented release limits."

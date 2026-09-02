@@ -1,0 +1,42 @@
+schema_version: 1
+id: "CHR-002"
+occurred_at: "2026-09-02T15:09:04+02:00"
+recorded_at: "2026-09-02T15:39:53+02:00"
+title: "Interactive project orientation accepted"
+summary: "History gained robust spatial navigation and milestone-neighborhood continuity for practical project orientation."
+branch_id: "BR-MAIN"
+parents:
+  - "CHR-001"
+status: "accepted"
+details:
+  context: "The original History surface exposed the chronology but did not provide enough spatial navigation or continuity for efficient orientation."
+  changed:
+    - "Added a minimap, bounded pan and zoom, rectangle selection, fullscreen navigation, and responsive framing."
+    - "Preserved normalized camera scale and graph center across fullscreen transitions and restored viewport dimensions reliably."
+    - "Added milestone-neighborhood navigation that keeps adjacent historical context available from detail views."
+  unchanged:
+    - "Chronicle data remains the read-only source of truth and the UI remains a deterministic projection."
+  acceptance_criteria:
+    - "Canonical and difficult histories preserve readable content, camera continuity, input parity, accessibility, CSP, and clean console behavior."
+    - "The integrated tracked main line passes the final release gate."
+  results:
+    - "The repaired History workflow passed independent critic review and entered the tracked main line through the September 2 merge."
+  known_limitations:
+    - "The tracked five-person human orientation study remains pending."
+    - "Native Linux portability remains pending."
+  next_step: "Validate human comprehension with the tracked orientation study."
+evidence:
+  - "EVD-0004"
+  - "EVD-0005"
+  - "EVD-0006"
+  - "EVD-0007"
+  - "EVD-0008"
+  - "EVD-0010"
+code_changes:
+  - diff_evidence_id: "EVD-0010"
+    why: "Make branching histories practically navigable while preserving readable framing and context across History and milestone detail views."
+    previous_behavior: "History exposed chronology with basic scrolling and jump-to-current, without the accepted minimap, bounded camera interactions, fullscreen continuity, responsive framing, or milestone-neighborhood workflow."
+    new_behavior: "History supports minimap navigation, bounded pan and cursor-anchored zoom, rectangle selection, fullscreen and responsive camera continuity, and linked milestone-neighborhood context with keyboard and accessibility coverage."
+    risks:
+      - "Camera state must remain stable across resize, fullscreen, route, and input-mode transitions."
+      - "Dense histories require bounds and safe-area enforcement so interactive framing does not hide accepted content."

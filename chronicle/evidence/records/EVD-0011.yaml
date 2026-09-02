@@ -1,0 +1,14 @@
+schema_version: 1
+id: "EVD-0011"
+captured_at: "2026-09-02T15:55:39+02:00"
+kind: "critic_report"
+title: "Self-Chronicle independent critic acceptance"
+description: "The exact final verdict accepting repair submission 1 and the complete two-milestone bootstrap candidate."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/self-chronicle-critic-accept.txt"
+  media_type: "text/plain"
+  sha256: "f4f0129610e19821ec10d132154b6ec29df735f5bda79b23b06fd986cfb9a5b4"
+origin:
+  tool: "independent critic"
+
