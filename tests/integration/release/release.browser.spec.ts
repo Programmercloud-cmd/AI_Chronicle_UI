@@ -139,18 +139,30 @@ test("packaged fullscreen, neighborhood, mixed Back, and camera-session flow sta
     await surface.focus();
     await page.keyboard.press("Shift+F");
     await expect.poll(() => surface.evaluate((element) => document.fullscreenElement === element)).toBe(true);
+    const enteredSurfaceBox = await surface.boundingBox();
+    if (enteredSurfaceBox === null) throw new Error("Fullscreen History surface has no browser bounds");
+    const enteredFramingFactor = Math.min(
+      enteredSurfaceBox.width / surfaceBox.width,
+      enteredSurfaceBox.height / surfaceBox.height,
+    );
     const enteredPose = await renderedHistoryPose(page);
     expect(enteredPose.centerX).toBeCloseTo(manualPose.centerX, 10);
     expect(enteredPose.centerY).toBeCloseTo(manualPose.centerY, 10);
-    expect(enteredPose.scale).toBeCloseTo(manualPose.scale, 10);
+    expect(enteredPose.scale).toBeCloseTo(manualPose.scale * enteredFramingFactor, 10);
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await expect.poll(() => surface.evaluate((element) => document.fullscreenElement === element)).toBe(true);
     await expect.poll(() => surface.evaluate((element) => [element.clientWidth, element.clientHeight])).toEqual([1280, 800]);
+    const resizedSurfaceBox = await surface.boundingBox();
+    if (resizedSurfaceBox === null) throw new Error("Resized fullscreen History surface has no browser bounds");
+    const resizedFramingFactor = Math.min(
+      resizedSurfaceBox.width / surfaceBox.width,
+      resizedSurfaceBox.height / surfaceBox.height,
+    );
     const resizedFullscreenPose = await renderedHistoryPose(page);
     expect(resizedFullscreenPose.centerX).toBeCloseTo(manualPose.centerX, 10);
     expect(resizedFullscreenPose.centerY).toBeCloseTo(manualPose.centerY, 10);
-    expect(resizedFullscreenPose.scale).toBeCloseTo(manualPose.scale, 10);
+    expect(resizedFullscreenPose.scale).toBeCloseTo(manualPose.scale * resizedFramingFactor, 10);
     expect(resizedFullscreenPose.minimap.every((value) => Number.isFinite(Number(value)))).toBe(true);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 

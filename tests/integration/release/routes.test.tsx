@@ -99,9 +99,18 @@ function renderBrowserShell(pathname = "/history") {
   return render(<BrowserRouter><AppShell /></BrowserRouter>);
 }
 
-function latestReleaseObserver(): ReleaseResizeObserver {
-  const observer = ReleaseResizeObserver.instances.at(-1);
-  if (observer === undefined) throw new Error("History did not create a ResizeObserver");
+async function latestReleaseObserver(): Promise<ReleaseResizeObserver> {
+  return waitFor(() => {
+    const observer = ReleaseResizeObserver.instances.at(-1);
+    if (observer === undefined) throw new Error("History did not create a ResizeObserver");
+    expect(observer.observe).toHaveBeenCalled();
+    return observer;
+  });
+}
+
+async function emitLatestReleaseResize(width = 900, height = 560): Promise<ReleaseResizeObserver> {
+  const observer = await latestReleaseObserver();
+  act(() => observer.emit(width, height));
   return observer;
 }
 
@@ -138,7 +147,7 @@ function minimapAttributes(): string[] {
 async function createPannedZoomedHistoryEvidence() {
   expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
   const viewport = { width: 900, height: 560 };
-  act(() => latestReleaseObserver().emit(viewport.width, viewport.height));
+  await emitLatestReleaseResize(viewport.width, viewport.height);
   const surface = screen.getByLabelText("Navigable project history timeline");
   const canvas = screen.getByRole("group", { name: "Branching project history" });
   fireEvent.keyDown(surface, { key: "ArrowLeft" });
@@ -198,8 +207,7 @@ describe("accepted page route integration", () => {
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
     const surface = screen.getByLabelText("Navigable project history timeline");
     expect(surface).toBeVisible();
-    const observer = ReleaseResizeObserver.instances.at(-1);
-    if (observer === undefined) throw new Error("History did not create a ResizeObserver");
+    const observer = await latestReleaseObserver();
     expect(observer.observe).toHaveBeenCalledWith(surface);
     act(() => observer.emit());
     expect(screen.getByText((_, element) =>
@@ -230,7 +238,7 @@ describe("accepted page route integration", () => {
     const user = userEvent.setup();
     const view = renderBrowserShell();
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
-    act(() => latestReleaseObserver().emit(900, 560));
+    await emitLatestReleaseResize();
     const surface = screen.getByLabelText("Navigable project history timeline");
     const canvas = screen.getByRole("group", { name: "Branching project history" });
     const minimapOutline = screen.getByTestId("history-minimap")
@@ -253,7 +261,7 @@ describe("accepted page route integration", () => {
     expect(await screen.findByRole("heading", { name: "Validation Passed" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Back" }));
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
-    act(() => latestReleaseObserver().emit(900, 560));
+    await emitLatestReleaseResize();
     const restoredCanvas = screen.getByRole("group", { name: "Branching project history" });
     const restoredOutline = screen.getByTestId("history-minimap")
       .querySelector("[data-minimap-viewport='outline']");
@@ -264,7 +272,7 @@ describe("accepted page route integration", () => {
     view.unmount();
     renderBrowserShell();
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
-    act(() => latestReleaseObserver().emit(900, 560));
+    await emitLatestReleaseResize();
     expect(screen.getByRole("group", { name: "Branching project history" }))
       .not.toHaveAttribute("viewBox", preservedViewBox);
   });
@@ -286,7 +294,7 @@ describe("accepted page route integration", () => {
     if (nativeFirst) await user.click(screen.getByRole("button", { name: "Back" }));
     else await nativeBrowserBack();
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
-    act(() => latestReleaseObserver().emit(original.viewport.width, original.viewport.height));
+    await emitLatestReleaseResize(original.viewport.width, original.viewport.height);
 
     expect(screen.getByRole("group", { name: "Branching project history" }))
       .toHaveAttribute("viewBox", original.viewBox);
@@ -305,7 +313,7 @@ describe("accepted page route integration", () => {
     expect(await screen.findByRole("heading", { name: "History" })).toBeVisible();
 
     const resizedViewport = { width: 1_180, height: 690 };
-    act(() => latestReleaseObserver().emit(resizedViewport.width, resizedViewport.height));
+    await emitLatestReleaseResize(resizedViewport.width, resizedViewport.height);
     const canvas = screen.getByRole("group", { name: "Branching project history" });
     const restored = cameraFromViewBox(canvas, resizedViewport);
     expect(restored.centerX).toBeCloseTo(original.camera.centerX, 10);
@@ -339,7 +347,7 @@ describe("accepted page route integration", () => {
 
     await user.click(screen.getByRole("button", { name: "Back" }));
     await waitFor(() => expect(screen.getByRole("heading", { name: "History" })).toBeVisible());
-    act(() => latestReleaseObserver().emit(900, 560));
+    await emitLatestReleaseResize();
     const historyCanvas = screen.getByRole("group", { name: "Branching project history" });
     const layout = historyLayoutFromSnapshot(canonical);
     if (!layout.ok) throw new Error(JSON.stringify(layout.diagnostics));

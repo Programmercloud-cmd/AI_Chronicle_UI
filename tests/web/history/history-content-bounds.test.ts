@@ -6,6 +6,7 @@ import type {
   TimelineNodeLayout,
 } from "../../../src/timeline";
 import {
+  HISTORY_CAMERA_HORIZONTAL_SAFE_AREA,
   cameraResetKey,
   canonicalCamera,
   historyContentBounds,
@@ -375,15 +376,18 @@ describe("History meaningful content bounds", () => {
 });
 
 describe("History canonical camera", () => {
-  it("fits meaningful height with 24px screen padding and ignores decorative canvas size", () => {
+  it("fits meaningful content with 24px screen padding on both axes and ignores decorative canvas size", () => {
     const layout = oneLaneLayout({ visibleTitle: "Tall fitting target" });
     const result = canonicalCamera({ ...layout, height: 90_000 }, { width: 800, height: 240 });
     const contentHeight = result.contentBounds.bottom - result.contentBounds.top;
+    const contentWidth = result.contentBounds.right - result.contentBounds.left;
 
-    expect(result.minScale).toBe(Math.min(1, (240 - 48) / contentHeight));
+    expect(result.minScale).toBe(Math.min(1, (800 - 48) / contentWidth, (240 - 48) / contentHeight));
     expect(result.maxScale).toBe(HISTORY_MAX_SCALE);
     expect(result.pose.centerY).toBe((result.contentBounds.top + result.contentBounds.bottom) / 2);
     const visible = visibleGraphRect(result.pose, { width: 800, height: 240 });
+    expect((result.contentBounds.left - visible.left) * result.pose.scale).toBeGreaterThanOrEqual(24 - 1e-9);
+    expect((visible.right - result.contentBounds.right) * result.pose.scale).toBeGreaterThanOrEqual(24 - 1e-9);
     expect((result.contentBounds.top - visible.top) * result.pose.scale).toBeGreaterThanOrEqual(24 - 1e-9);
     expect((visible.bottom - result.contentBounds.bottom) * result.pose.scale).toBeGreaterThanOrEqual(24 - 1e-9);
   });
@@ -404,6 +408,33 @@ describe("History canonical camera", () => {
     expect(result.currentNodeId).toBe("CURRENT");
     expect(result.pose.centerX).toBe(result.navigationBounds.left + 400 / result.pose.scale);
     expect(visible.left).toBeCloseTo(result.navigationBounds.left, 12);
+  });
+
+  it("reserves 24 CSS pixels for all measured text bounds at both horizontal pan limits", () => {
+    const layout = oneLaneLayout({
+      visibleTitle: "A deliberately wide milestone title used at both pan limits",
+      fullTitle: "A deliberately wide milestone title used at both pan limits",
+      treatment: "current",
+      currentState: "A current state label whose measured bounds are part of the graph",
+      calloutLabel: "CURRENT STATE",
+    });
+    const viewport = { width: 800, height: 500 };
+    const result = canonicalCamera(layout, viewport);
+
+    for (const scale of [result.minScale, result.minScale * 1.5, result.maxScale]) {
+      const halfWidth = viewport.width / (2 * scale);
+      const leftVisibleEdge = result.navigationBounds.left;
+      const rightVisibleEdge = result.navigationBounds.right;
+      expect((result.contentBounds.left - leftVisibleEdge) * scale).toBeGreaterThanOrEqual(
+        HISTORY_CAMERA_HORIZONTAL_SAFE_AREA - 1e-8,
+      );
+      expect((rightVisibleEdge - result.contentBounds.right) * scale).toBeGreaterThanOrEqual(
+        HISTORY_CAMERA_HORIZONTAL_SAFE_AREA - 1e-8,
+      );
+      expect(result.navigationBounds.left + halfWidth).toBeLessThanOrEqual(
+        result.navigationBounds.right - halfWidth,
+      );
+    }
   });
 
   it("centers currentless history on meaningful content without inferring a current node", () => {
