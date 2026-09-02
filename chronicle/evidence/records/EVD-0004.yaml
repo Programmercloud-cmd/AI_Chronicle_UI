@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0004"
+captured_at: "2026-08-21T00:39:08+02:00"
+kind: "file"
+title: "Pinned History navigation implementation"
+description: "Tracked source for the initial interactive History and neighborhood workflow implementation."
+source:
+  kind: "repository_ref"
+  path: "src/web/history/history-view.tsx"
+  revision: "32c9222bc2ecfde5013a27faec520156cf5b3cef"
+origin:
+  tool: "git"
+  target_revision: "32c9222bc2ecfde5013a27faec520156cf5b3cef"

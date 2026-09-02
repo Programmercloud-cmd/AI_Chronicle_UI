@@ -1,0 +1,7 @@
+schema_version: 1
+project:
+  id: "project-chronicle"
+  title: "Project Chronicle"
+  description: "The tracked history of Project Chronicle's accepted product capabilities and supported follow-up work."
+display:
+  timezone: "Europe/Paris"

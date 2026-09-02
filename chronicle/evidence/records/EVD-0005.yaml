@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0005"
+captured_at: "2026-08-21T22:22:57+02:00"
+kind: "file"
+title: "Pinned History framing repair"
+description: "Tracked source for the hover and fullscreen camera repair accepted beneath CHR-002."
+source:
+  kind: "repository_ref"
+  path: "src/web/history/history-fullscreen-camera.ts"
+  revision: "5ade1f9ee65aca5b9def29151c2ce35803406fb2"
+origin:
+  tool: "git"
+  target_revision: "5ade1f9ee65aca5b9def29151c2ce35803406fb2"

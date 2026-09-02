@@ -1,0 +1,4 @@
+schema_version: 1
+id: "BR-MAIN"
+title: "Accepted main line"
+description: "Owner-relevant capabilities accepted into the repository's tracked main line."

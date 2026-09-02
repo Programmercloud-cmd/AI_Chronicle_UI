@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVD-0009"
+captured_at: "2026-08-20T11:55:14+02:00"
+kind: "diff"
+title: "Executable v1 foundation patch"
+description: "Binary-capable full-index Git patch for the tracked contract, schemas, runtime, UI, fixtures, and release checks supporting CHR-001; the unrelated design reference PNG is intentionally excluded."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/diffs/CHR-001.patch"
+  media_type: "text/x-diff"
+  sha256: "e43dbed4e55f4439fbba0ea334111a3a9cf7e42ab2f3d2178389cf38fd5a72c9"
+origin:
+  tool: "git"
+  command: "git diff --binary --full-index --output=chronicle/evidence/artifacts/diffs/CHR-001.patch 3b9f4b3df863ad10129b2466c480143b1fd13032 f8384070684f33d8e98ceed9a9215cfb9ce936f3 -- README.md docs/schema/v1-public-contract.md docs/usability/orientation-study.md examples index.html package-lock.json package.json public schema scripts src tests tsconfig.build.json tsconfig.json tsconfig.web.json vite.config.ts vitest.config.ts"
+  base_revision: "3b9f4b3df863ad10129b2466c480143b1fd13032"
+  target_revision: "f8384070684f33d8e98ceed9a9215cfb9ce936f3"

@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0003"
+captured_at: "2026-09-02T15:39:53+02:00"
+kind: "experiment_report"
+title: "Final MVP gap audit"
+description: "Time-scoped August 20 audit supporting the accepted release boundary and the remaining human and Linux validation gaps."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/final-gap-audit.md"
+  media_type: "text/plain"
+  sha256: "b7a8c0e80a83a1e90fc4261a2913a76d3c7ad6d771385b870b62f4f4d22e263e"
+origin:
+  tool: "Project Chronicle investigation"

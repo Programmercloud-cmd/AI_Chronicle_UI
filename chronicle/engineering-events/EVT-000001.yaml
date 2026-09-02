@@ -1,0 +1,15 @@
+schema_version: 1
+id: "EVT-000001"
+occurred_at: "2026-08-21T00:39:08+02:00"
+recorded_at: "2026-09-02T15:39:53+02:00"
+milestone_id: "CHR-002"
+kind: "implementation"
+actor:
+  type: "tool"
+  role: "source_control"
+  label: "Git commit 32c9222"
+outcome: "completed"
+summary: "Committed the initial expanded History navigation and milestone-neighborhood workflows to tracked source."
+details: "This source-control event records when the implementation became committed, not when an agent completed work or when the owner-facing capability was accepted."
+evidence:
+  - "EVD-0004"

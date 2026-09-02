@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVD-0010"
+captured_at: "2026-09-02T15:09:04+02:00"
+kind: "diff"
+title: "Interactive project-orientation patch"
+description: "Binary-capable full-index Git patch spanning the initial navigation implementation and accepted repair through the main-line merge; image snapshots are omitted while production source and behavior tests are retained."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/diffs/CHR-002.patch"
+  media_type: "text/x-diff"
+  sha256: "70c70f1172e0c6d71f7ed5fe748c2516a5a4d7f3a02cfa116bc249668b6359ae"
+origin:
+  tool: "git"
+  command: 'git diff --binary --full-index --output=chronicle/evidence/artifacts/diffs/CHR-002.patch f8384070684f33d8e98ceed9a9215cfb9ce936f3 baa22a0594e33d82db91f40271192b8f474b8df7 -- src/web/app-shell src/web/detail src/web/history src/web/styles tests/integration/release tests/visual/history tests/web/app-shell tests/web/detail tests/web/history ":(exclude)tests/visual/history/snapshots/**"'
+  base_revision: "f8384070684f33d8e98ceed9a9215cfb9ce936f3"
+  target_revision: "baa22a0594e33d82db91f40271192b8f474b8df7"

@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0007"
+captured_at: "2026-09-02T15:39:53+02:00"
+kind: "critic_report"
+title: "History repair and integration critic verdicts"
+description: "Compact accepted evidence for the repair iterations, integration flow, and final release gate."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/history-ui-issues-critic-verdicts.md"
+  media_type: "text/plain"
+  sha256: "a0fecea2b6d724378820d80cf45d48b4212a29ea2dc4e23f64a046dc587363f7"
+origin:
+  tool: "Project Chronicle investigation"

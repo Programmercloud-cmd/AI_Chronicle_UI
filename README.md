@@ -35,7 +35,7 @@ npm run check
 npm run release:check
 ```
 
-`release:check` runs schema/type drift checks, the clean production build, unit/component/integration tests, five reviewed History screenshots plus geometry/accessibility checks, a runtime-only tarball inspection, an unrelated-directory production install, installed CLI/HTTP smoke tests, and the packaged-browser CSP/accessibility flow.
+`release:check` runs schema/type drift checks, the clean production build, unit/component/integration tests, the reviewed History screenshot suite plus geometry/accessibility checks, a runtime-only tarball inspection, an unrelated-directory production install, installed CLI/HTTP smoke tests, and the packaged-browser CSP/accessibility flow.
 
 ## Chronicle directory
 
@@ -65,7 +65,7 @@ Evidence is untrusted. Text and diffs are escaped and rendered as data; HTML is 
 
 ## V1 operating limits
 
-- Desktop-first History view with horizontal scrolling and jump-to-current; no minimap or free zoom/pan.
+- Desktop-first History view with a minimap, bounded pan/zoom, rectangle selection, fullscreen navigation, responsive framing, and jump-to-current.
 - Characterized layout envelope: 250 milestones, 12 branches, and 30 projected roadmap items. Larger browser histories may become difficult before the pure layout becomes slow.
 - Unified diffs up to 2 MB render inline. Oversized, binary, invalid-UTF-8, or unparsable artifacts remain downloadable.
 - Escaped text/diff and signature-validated PNG/JPEG/WebP have dedicated previews; other evidence formats are download-only.

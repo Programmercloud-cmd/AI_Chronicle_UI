@@ -1,0 +1,26 @@
+schema_version: 1
+updated_at: "2026-09-02T15:55:57+02:00"
+items:
+  - id: "RM-001"
+    title: "Run the human orientation study"
+    status: "pending"
+    order: 10
+    follows:
+      type: "milestone"
+      id: "CHR-003"
+    branch_id: "BR-MAIN"
+    acceptance_criteria:
+      - "At least four of five participants meet the tracked ten-second History and three-minute orientation thresholds."
+      - "At least one participant completes the core flow keyboard-only without assistance or hover-only information."
+    related_milestones:
+      - "CHR-002"
+      - "CHR-003"
+  - id: "RM-002"
+    title: "Complete native Linux portability validation"
+    status: "pending"
+    order: 10
+    acceptance_criteria:
+      - "A clean production install plus chronicle init, validate, and serve pass on native Linux or Linux CI."
+      - "Browser assets, deep links, and supported symlink-containment cases pass on Linux."
+    related_milestones:
+      - "CHR-001"

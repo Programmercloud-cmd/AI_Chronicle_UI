@@ -1,0 +1,16 @@
+schema_version: 1
+id: "EVT-000002"
+occurred_at: "2026-08-21T22:22:57+02:00"
+recorded_at: "2026-09-02T15:39:53+02:00"
+milestone_id: "CHR-002"
+kind: "implementation"
+actor:
+  type: "tool"
+  role: "source_control"
+  label: "Git commit 5ade1f9"
+outcome: "completed"
+summary: "Committed the hover-stability and fullscreen-camera framing repair to tracked source."
+details: "This source-control event records the repair commit; the separate critic artifact establishes its review outcome without assigning that outcome to the commit instant."
+evidence:
+  - "EVD-0005"
+  - "EVD-0007"

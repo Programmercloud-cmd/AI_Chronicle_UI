@@ -1,0 +1,14 @@
+schema_version: 1
+id: "EVD-0008"
+captured_at: "2026-08-20T11:55:14+02:00"
+kind: "experiment_report"
+title: "Human orientation study protocol"
+description: "The tracked, not-yet-run protocol that defines the remaining human comprehension gate."
+source:
+  kind: "artifact"
+  path: "evidence/artifacts/reports/orientation-study.md"
+  media_type: "text/plain"
+  sha256: "92572e2aa29a3d75db72e785a732eacf23b1e27f9daa7d6c348ec427a4ce13c4"
+origin:
+  tool: "git"
+  target_revision: "f8384070684f33d8e98ceed9a9215cfb9ce936f3"

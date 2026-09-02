@@ -1,0 +1,13 @@
+schema_version: 1
+id: "EVD-0001"
+captured_at: "2026-08-20T11:55:14+02:00"
+kind: "file"
+title: "Pinned v1 public contract"
+description: "The normative v1 contract in the commit that established the coherent executable foundation."
+source:
+  kind: "repository_ref"
+  path: "docs/schema/v1-public-contract.md"
+  revision: "f8384070684f33d8e98ceed9a9215cfb9ce936f3"
+origin:
+  tool: "git"
+  target_revision: "f8384070684f33d8e98ceed9a9215cfb9ce936f3"
