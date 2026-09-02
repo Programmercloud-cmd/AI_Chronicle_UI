@@ -23,6 +23,7 @@ import type {
 } from "./types";
 
 const rootEntries = new Set([
+  "AGENTS.md",
   "project.yaml",
   "current.yaml",
   "roadmap.yaml",

@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -33,6 +33,15 @@ describe("Chronicle CLI", () => {
     if (!loaded.ok) return;
     expect((await validateChronicle(loaded.value)).ok).toBe(true);
     expect(loaded.value.project.value.project.id).toBe("my-project");
+    const generatedGuide = await readFile(path.join(root, "AGENTS.md"));
+    const maintainedGuide = await readFile(path.resolve("templates/chronicle/AGENTS.md"));
+    expect(generatedGuide.equals(maintainedGuide)).toBe(true);
+    expect(generatedGuide.toString("utf8")).toContain("# Project Chronicle — Agent Authoring Guide");
+    await Promise.all([
+      "project.yaml", "roadmap.yaml", "branches", "milestones", "engineering-events",
+      "revisions", "evidence/records", "evidence/artifacts/diffs", "evidence/artifacts/logs",
+      "evidence/artifacts/reports", "evidence/artifacts/screenshots",
+    ].map((relativePath) => stat(path.join(root, ...relativePath.split("/")))));
     expect(output.stdout.join("")).toContain("Initialized Chronicle");
   });
 

@@ -5,6 +5,7 @@
   "description": "Portable local development-history visualization",
   "files": [
     "dist/",
+    "templates/chronicle/AGENTS.md",
     "README.md",
     "docs/schema/v1-public-contract.md",
     "docs/usability/orientation-study.md"

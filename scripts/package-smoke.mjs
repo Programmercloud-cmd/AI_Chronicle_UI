@@ -10,9 +10,11 @@ const temporaryRoot = await mkdtemp(path.join(tmpdir(), "chronicle-package-smoke
 const packDirectory = path.join(temporaryRoot, "pack");
 const consumerDirectory = path.join(temporaryRoot, "consumer");
 const cacheDirectory = path.join(temporaryRoot, "npm-cache");
+const globalPrefix = path.join(temporaryRoot, "global");
 await mkdir(packDirectory);
 await mkdir(consumerDirectory);
 await mkdir(cacheDirectory);
+await mkdir(globalPrefix);
 
 function run(command, args, cwd = repositoryRoot) {
   const result = spawnSync(command, args, { cwd, encoding: "utf8", shell: false });
@@ -47,6 +49,10 @@ function npm(args, cwd = repositoryRoot) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function stage(message) {
+  process.stdout.write(`[package-smoke] ${message}\n`);
 }
 
 let server;
@@ -90,6 +96,7 @@ async function stopInstalledServer() {
 }
 
 try {
+  stage("packing repository");
   const packed = JSON.parse(npm(["pack", "--json", "--pack-destination", packDirectory]));
   const metadata = packed[0];
   assert(metadata !== undefined, "npm pack returned no package metadata");
@@ -99,6 +106,7 @@ try {
     "dist/src/server/static-web.js",
     "dist/schema/v1/project.schema.json",
     "dist/web/index.html",
+    "templates/chronicle/AGENTS.md",
     "docs/schema/v1-public-contract.md",
     "docs/usability/orientation-study.md",
     "README.md",
@@ -112,19 +120,39 @@ try {
     ].includes(file)));
   assert(forbidden.length === 0, `package contains forbidden files: ${forbidden.join(", ")}`);
   assert(!files.some((file) => file.startsWith("dist/tests/")), "package contains compiled tests");
+  run("git", ["check-ignore", "--quiet", "--no-index", `project-chronicle-${metadata.version}.tgz`]);
 
   const tarball = path.join(packDirectory, metadata.filename);
   await writeFile(path.join(consumerDirectory, "package.json"), JSON.stringify({ name: "chronicle-smoke-consumer", private: true }));
+  stage("installing production package in unrelated consumer");
   npm(["install", tarball, "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], consumerDirectory);
   assert(!existsSync(path.join(consumerDirectory, "node_modules", "vitest")), "clean install contains a Chronicle dev dependency");
   const bin = path.join(consumerDirectory, "node_modules", "project-chronicle", "dist", "src", "cli", "bin.js");
   const initialized = path.join(temporaryRoot, "initialized");
+  stage("initializing and validating through clean local install");
   run(process.execPath, [bin, "init", initialized], consumerDirectory);
+  const installedTemplate = await readFile(path.join(consumerDirectory, "node_modules", "project-chronicle", "templates", "chronicle", "AGENTS.md"));
+  const initializedGuide = await readFile(path.join(initialized, "AGENTS.md"));
+  assert(initializedGuide.equals(installedTemplate), "installed CLI did not copy its packaged AGENTS.md template byte-for-byte");
   const validation = run(process.execPath, [bin, "validate", initialized], consumerDirectory);
   assert(validation.includes('"valid": true'), "installed CLI did not validate its initialized dataset");
+
+  stage("installing package into isolated global prefix");
+  npm(["install", "--global", "--prefix", globalPrefix, tarball, "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], consumerDirectory);
+  const globalBin = process.platform === "win32"
+    ? path.join(globalPrefix, "chronicle.cmd")
+    : path.join(globalPrefix, "bin", "chronicle");
+  const globalInitialized = path.join(temporaryRoot, "global-initialized");
+  stage("initializing through globally installed command");
+  if (process.platform === "win32") run("cmd.exe", ["/d", "/s", "/c", globalBin, "init", globalInitialized], consumerDirectory);
+  else run(globalBin, ["init", globalInitialized], consumerDirectory);
+  const globalGuide = await readFile(path.join(globalInitialized, "AGENTS.md"));
+  assert(globalGuide.equals(installedTemplate), "globally installed CLI did not copy its packaged AGENTS.md template byte-for-byte");
+
   const canonicalValidation = run(process.execPath, [bin, "validate", path.join(repositoryRoot, "examples", "canonical")], consumerDirectory);
   assert(canonicalValidation.includes('"valid": true'), "installed CLI did not validate canonical data");
 
+  stage("running packaged canonical HTTP and browser checks");
   const canonicalServer = await startInstalledServer(bin, path.join(repositoryRoot, "examples", "canonical"));
   server = canonicalServer.child;
   const origin = canonicalServer.origin;
@@ -161,6 +189,7 @@ try {
   });
 
   await stopInstalledServer();
+  stage("running packaged difficult browser checks");
   const difficultServer = await startInstalledServer(bin, path.join(repositoryRoot, "examples", "difficult"));
   server = difficultServer.child;
   await runAsync(process.execPath, [playwrightCli, "test", "--config", browserConfig, "--reporter=line"], repositoryRoot, {
@@ -171,8 +200,8 @@ try {
 
   process.stdout.write(`${JSON.stringify({
     package: { entries: metadata.entryCount, packedBytes: metadata.size, unpackedBytes: metadata.unpackedSize },
-    install: "production-only",
-    cli: ["init", "validate-initialized", "validate-canonical"],
+    install: ["production-only", "global"],
+    cli: ["init", "global-init", "validate-initialized", "validate-canonical"],
     origin,
     http: ["/", "/history", "/roadmap", "/milestones/TIM-002", assetPath, "/api/snapshot", "/api/evidence/EVD-0001/preview", "/api/evidence/EVD-0001/raw"],
     browser: ["canonical:PASS", "difficult:PASS"],
