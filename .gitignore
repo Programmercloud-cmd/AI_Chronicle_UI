@@ -228,6 +228,7 @@ __marimo__/
 /test-results/
 /playwright-report/
 /.npm-cache/
+/project-chronicle-*.tgz
 
 # Sample evidence is product test data, including deliberately captured logs.
 !/examples/**/evidence/artifacts/**/*.log

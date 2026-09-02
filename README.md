@@ -8,28 +8,22 @@ Project Chronicle is a reusable local viewer for portable software-project histo
 - Linux or Windows development machine
 - Google Chrome for the tracked visual and packaged-browser release checks
 
-## Install and run
+## Developing Chronicle itself
 
-Build and install the tested local tarball:
+From a Chronicle source checkout, install the already-locked dependencies, build, and create the tested local package:
 
 ```text
-npm install
+npm ci
 npm run build
 npm pack
-npm install /path/to/project-chronicle-0.1.0.tgz
-npx chronicle init /path/to/project/chronicle
-npx chronicle validate /path/to/project/chronicle
-npx chronicle serve /path/to/project/chronicle
 ```
 
-The v1 package is intentionally marked private and is not published to the public npm registry. The tarball workflow above is the supported portable installation path.
+This creates `project-chronicle-<version>.tgz` in the repository root. It is a generated local package artifact, is ignored by Git, and should not be committed. The v1 package is intentionally marked private and is not published to the public npm registry.
 
-`serve` binds only to `127.0.0.1` and defaults to port `4317`. Open the printed URL to view Current, History, Roadmap, and milestone details. The server reloads and validates the complete dataset for each snapshot request; it exposes no mutation API.
-
-For repository development:
+For repository development and release verification:
 
 ```text
-npm install
+npm ci
 npm run build
 npm run check
 npm run release:check
@@ -37,10 +31,47 @@ npm run release:check
 
 `release:check` runs schema/type drift checks, the clean production build, unit/component/integration tests, the reviewed History screenshot suite plus geometry/accessibility checks, a runtime-only tarball inspection, an unrelated-directory production install, installed CLI/HTTP smoke tests, and the packaged-browser CSP/accessibility flow.
 
+## Installing Chronicle for use across projects
+
+Install the packed CLI globally once on the machine:
+
+```text
+npm install -g /path/to/project-chronicle-0.1.0.tgz
+```
+
+After that, `chronicle` is available from arbitrary directories:
+
+```text
+chronicle init ./dev/chronicle
+chronicle validate ./dev/chronicle
+chronicle serve ./dev/chronicle
+```
+
+This keeps Chronicle out of each consuming project's npm dependency tree. A project does not need to create or modify its own `package.json`, `package-lock.json`, or `node_modules/` merely to maintain Chronicle documentation. Conceptually, one globally installed Chronicle package serves datasets such as `Project A/dev/chronicle/`, `Project B/dev/chronicle/`, and `Project C/dev/chronicle/`; each project contains only its Chronicle dataset.
+
+`serve` binds only to `127.0.0.1` and defaults to port `4317`. Open the printed URL to view Current, History, Roadmap, and milestone details. The server reloads and validates the complete dataset for each snapshot request; it exposes no mutation API.
+
+## Using Chronicle in another project
+
+With Chronicle globally installed, adoption is one initialization command inside the project:
+
+```text
+# one-time machine installation
+npm install -g /path/to/project-chronicle-0.1.0.tgz
+
+# inside any project
+chronicle init ./dev/chronicle
+chronicle validate ./dev/chronicle
+chronicle serve ./dev/chronicle
+```
+
+`chronicle init` creates the data scaffold plus a dataset-local `AGENTS.md` containing Chronicle authoring guidance for AI coding agents. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `dev/chronicle/AGENTS.md` can follow those rules while editing Chronicle records. The guide is optional, noncanonical authoring help: existing datasets without it remain valid, and Chronicle itself does not depend on AI.
+
 ## Chronicle directory
 
 ```text
 chronicle/
+├── AGENTS.md
 ├── project.yaml
 ├── current.yaml
 ├── roadmap.yaml

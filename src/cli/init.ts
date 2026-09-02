@@ -1,10 +1,26 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const directories = [
   "branches", "milestones", "engineering-events", "revisions", "evidence/records",
   "evidence/artifacts/diffs", "evidence/artifacts/logs", "evidence/artifacts/reports", "evidence/artifacts/screenshots",
 ];
+
+async function readAgentGuideTemplate(): Promise<Buffer> {
+  const candidates = [
+    path.resolve(__dirname, "../../templates/chronicle/AGENTS.md"),
+    path.resolve(__dirname, "../../../templates/chronicle/AGENTS.md"),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      return await readFile(candidate);
+    } catch (error) {
+      if (typeof error !== "object" || error === null || !("code" in error) || error.code !== "ENOENT") throw error;
+    }
+  }
+  throw new Error("Chronicle agent-authoring guide is missing from this installation");
+}
 
 function projectId(rootPath: string): string {
   const candidate = path.basename(path.resolve(rootPath)).toLowerCase()
@@ -14,11 +30,13 @@ function projectId(rootPath: string): string {
 
 export async function initializeChronicle(rootPath: string, now = new Date()): Promise<void> {
   const resolved = path.resolve(rootPath);
+  const agentGuide = await readAgentGuideTemplate();
   let created = false;
   try {
     await mkdir(resolved);
     created = true;
     for (const directory of directories) await mkdir(path.join(resolved, ...directory.split("/")), { recursive: true });
+    await writeFile(path.join(resolved, "AGENTS.md"), agentGuide, { flag: "wx" });
     const id = projectId(resolved);
     const title = path.basename(resolved).replace(/[\u0000-\u001f\u007f]+/gu, " ").trim() || "Chronicle Project";
     await writeFile(path.join(resolved, "project.yaml"), [

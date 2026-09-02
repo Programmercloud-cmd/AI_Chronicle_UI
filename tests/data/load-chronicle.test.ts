@@ -95,6 +95,19 @@ describe("loadChronicle examples", () => {
       "BR-ZETA",
     ]);
   });
+
+  it("accepts AGENTS.md as optional noncanonical authoring guidance", async () => {
+    const withoutGuide = await createMinimalChronicle("without-guide");
+    const withGuide = await createMinimalChronicle("with-guide");
+    await writeFile(path.join(withGuide, "AGENTS.md"), "# Agent guidance\n", "utf8");
+
+    const withoutResult = await loadChronicle(withoutGuide);
+    const withResult = await loadChronicle(withGuide);
+    expect(withoutResult.ok).toBe(true);
+    expect(withResult.ok).toBe(true);
+    if (!withResult.ok) return;
+    expect(JSON.stringify(withResult.value)).not.toContain("Agent guidance");
+  });
 });
 
 describe("loadChronicle failure behavior", () => {
