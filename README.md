@@ -13,11 +13,30 @@ Chronicle itself is installed separately as a CLI application. The project direc
 
 ---
 
-## Quick start
+## Consumer: install and use Chronicle
+
+Consumers install a package from the [Project Chronicle Releases page](https://github.com/Programmercloud-cmd/AI_Chronicle_UI/releases). They do not need to clone this repository, install Chronicle's development dependencies, or build Chronicle themselves.
+
+The consumer flow is:
+
+```text
+download release
+→ optionally verify SHA-256
+→ install globally
+→ initialize once or use an existing dataset
+→ validate
+→ serve
+```
 
 ### 1. Install Chronicle once on your machine
 
-From a packaged Chronicle tarball:
+Download `project-chronicle-<version>.tgz` and, optionally, `SHA256SUMS.txt` from the Releases page. From the download directory, the checksum can be verified with:
+
+```bash
+sha256sum --check SHA256SUMS.txt
+```
+
+Install the downloaded package:
 
 ```bash
 npm install -g /path/to/project-chronicle-<version>.tgz
@@ -193,7 +212,7 @@ If a future release introduces an incompatible dataset-schema change, that relea
 
 ---
 
-# Developing and packaging Chronicle
+# Chronicle maintainer: develop and release
 
 This section is for contributors working on Chronicle itself, not consumers using Chronicle in another project.
 
@@ -225,20 +244,20 @@ npm run release:check
 
 `release:check` covers schema/type drift, production build, automated tests, reviewed History visual checks, package inspection, installed CLI/HTTP smoke tests, and packaged-browser security/accessibility checks.
 
-## Create a distributable package
+## Inspect a package locally
 
 ```bash
 npm pack --dry-run
 npm pack
 ```
 
-This produces:
+This local development check produces:
 
 ```text
 project-chronicle-<version>.tgz
 ```
 
-The tarball is generated package output, is ignored by Git, and should not be committed.
+The tarball is generated package output, is ignored by Git, and should not be committed. GitHub Actions performs production packaging; maintainers do not manually run `npm pack` for a normal release.
 
 The package contains the runtime and initialization assets needed by consumers. Chronicle's own tracked project history, examples, tests, and development scratch state are not part of the consumer package.
 
@@ -255,33 +274,38 @@ review / tests
     ↓
 main
     ↓
-version tag / release
+version commit and tag
     ↓
-npm pack
+GitHub Actions release gates and npm pack
     ↓
 project-chronicle-<version>.tgz
     ↓
 consumer installs globally
 ```
 
-For example:
+Release only from an accepted `main` commit and a clean working tree. For a patch release:
 
 ```bash
 git checkout main
-git pull
+git pull --ff-only
 
 npm ci
 npm run release:check
 
-# update the version deliberately as appropriate
+npm version patch --git-tag-version=true --tag-version-prefix=v
+VERSION="$(node -p "require('./package.json').version")"
 
-npm run build
-npm pack
+git push origin main
+git push origin "v${VERSION}"
 ```
 
-A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version.
+A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version. Substitute `minor` or `major` in the `npm version` command when appropriate.
 
-Be aware that `npm version` can create a commit and tag, so use it deliberately as part of the chosen release process.
+`npm version` updates `package.json` and `package-lock.json`, creates the version commit, and creates the matching `v<version>` tag. Review the commit and tag before pushing them. The tag push triggers `.github/workflows/release.yml`; a push to `main` alone does not create a release.
+
+The clean Ubuntu runner validates the tag against `package.json`, rejects existing releases, installs from the lockfile, audits production dependencies, runs `release:check`, packs and inspects the package, generates `SHA256SUMS.txt`, and publishes both assets through the built-in `GITHUB_TOKEN`. Repository maintainers can see [CHRONICLE_WORKFLOWS.md](https://github.com/Programmercloud-cmd/AI_Chronicle_UI/blob/main/CHRONICLE_WORKFLOWS.md) for the exact procedures and the one-time repository setting.
+
+Published releases are immutable. Correct a bad release with a new patch version rather than replacing an existing tag or release.
 
 ---
 

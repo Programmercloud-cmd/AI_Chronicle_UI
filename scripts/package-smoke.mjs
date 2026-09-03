@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { assertPackageFiles } from "./package-policy.mjs";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const temporaryRoot = await mkdtemp(path.join(tmpdir(), "chronicle-package-smoke-"));
 const packDirectory = path.join(temporaryRoot, "pack");
@@ -105,26 +107,7 @@ try {
   const metadata = packed[0];
   assert(metadata !== undefined, "npm pack returned no package metadata");
   const files = metadata.files.map((entry) => entry.path);
-  for (const required of [
-    "dist/src/cli/bin.js",
-    "dist/src/server/static-web.js",
-    "dist/schema/v1/project.schema.json",
-    "dist/web/index.html",
-    "templates/chronicle/AGENTS.md",
-    "templates/chronicle/.gitattributes",
-    "docs/schema/v1-public-contract.md",
-    "docs/usability/orientation-study.md",
-    "README.md",
-    "package.json",
-  ]) assert(files.includes(required), `package is missing ${required}`);
-  const forbidden = files.filter((file) =>
-    /^(?:src|tests|examples|scripts|test-results|dev|chronicle)\//u.test(file) ||
-    (file.startsWith("docs/") && ![
-      "docs/schema/v1-public-contract.md",
-      "docs/usability/orientation-study.md",
-    ].includes(file)));
-  assert(forbidden.length === 0, `package contains forbidden files: ${forbidden.join(", ")}`);
-  assert(!files.some((file) => file.startsWith("dist/tests/")), "package contains compiled tests");
+  assertPackageFiles(metadata.files);
   run("git", ["check-ignore", "--quiet", "--no-index", `project-chronicle-${metadata.version}.tgz`]);
 
   const tarball = path.join(packDirectory, metadata.filename);

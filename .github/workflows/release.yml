@@ -1,0 +1,120 @@
+name: Release Project Chronicle
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Validate, package, and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Validate tag against package version
+        run: node scripts/release-artifacts.mjs validate "$GITHUB_REF_NAME"
+
+      - name: Verify the tagged commit is on main
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git fetch --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+
+          tag_commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          head_commit="$(git rev-parse "HEAD^{commit}")"
+          main_commit="$(git rev-parse "refs/remotes/origin/main^{commit}")"
+
+          if [[ "$tag_commit" != "$head_commit" ]]; then
+            echo "::error::Checked-out commit $head_commit does not match peeled tag $GITHUB_REF_NAME commit $tag_commit."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$tag_commit" "$main_commit"; then
+            echo "::error::Tag $GITHUB_REF_NAME points to $tag_commit, which is not reachable from origin/main ($main_commit). Release only an accepted main commit."
+            exit 1
+          fi
+
+      - name: Reject an existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release $GITHUB_REF_NAME already exists. Published versions are immutable; create a new version instead."
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+      - name: Run the authoritative release gate
+        run: npm run release:check
+
+      - name: Pack and checksum the release artifact
+        id: artifacts
+        shell: bash
+        run: |
+          package_file="$(node scripts/release-artifacts.mjs prepare "$GITHUB_REF_NAME" release-artifacts)"
+          test -f "$package_file"
+          echo "package_file=$package_file" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the final checksum
+        working-directory: release-artifacts
+        run: sha256sum --check SHA256SUMS.txt
+
+      - name: Create the GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_FILE: ${{ steps.artifacts.outputs.package_file }}
+        run: |
+          set -Eeuo pipefail
+          tag="$GITHUB_REF_NAME"
+          draft_created=false
+          published=false
+
+          cleanup_failed_draft() {
+            status=$?
+            if [[ $status -ne 0 && "$draft_created" == true && "$published" != true ]]; then
+              echo "Cleaning up the unpublished draft after release failure."
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes || \
+                echo "::warning::Could not remove failed draft release $tag; remove it before retrying."
+            fi
+          }
+          trap cleanup_failed_draft EXIT
+
+          gh release create "$tag" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --verify-tag \
+            --title "Project Chronicle $tag" \
+            --generate-notes \
+            --notes-file release-artifacts/RELEASE_NOTES.md
+          draft_created=true
+
+          gh release upload "$tag" \
+            "$PACKAGE_FILE" \
+            release-artifacts/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY"
+
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | \
+            grep -Fx -- "$(basename "$PACKAGE_FILE")" >/dev/null
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | \
+            grep -Fx -- "SHA256SUMS.txt" >/dev/null
+
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+          published=true
