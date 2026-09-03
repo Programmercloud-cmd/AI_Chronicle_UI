@@ -1,86 +1,293 @@
 # Project Chronicle
 
-Project Chronicle is a reusable local viewer for portable software-project history. A Chronicle directory contains inspectable YAML records and evidence artifacts; the web UI is a deterministic, read-only projection of that data.
+Project Chronicle is a local, read-only viewer for portable software-project history.
+
+A project keeps its Chronicle data in a normal directory such as:
+
+```text
+my-project/
+└── chronicle/
+```
+
+Chronicle itself is installed separately as a CLI application. The project directory contains the history; the globally installed Chronicle package validates and displays it.
+
+---
+
+## Quick start
+
+### 1. Install Chronicle once on your machine
+
+From a packaged Chronicle tarball:
+
+```bash
+npm install -g /path/to/project-chronicle-<version>.tgz
+```
+
+Verify that the CLI is available:
+
+```bash
+chronicle --help
+```
+
+You only need to install Chronicle once per machine.
+
+---
+
+### 2. Add Chronicle to a project for the first time
+
+From the root of the project:
+
+```bash
+chronicle init ./chronicle
+```
+
+Run `init` **only once**, when the project does not already contain a Chronicle dataset.
+
+A new dataset contains the files needed to begin, including:
+
+```text
+chronicle/
+├── AGENTS.md
+├── .gitattributes
+├── project.yaml
+├── current.yaml
+└── roadmap.yaml
+```
+
+Record directories such as these may not exist yet:
+
+```text
+branches/
+milestones/
+engineering-events/
+revisions/
+evidence/records/
+evidence/artifacts/
+```
+
+That is expected. Missing collection directories mean that the collection is currently empty. They are created when the first corresponding record or artifact is added.
+
+`AGENTS.md` contains Chronicle authoring guidance for coding agents.
+
+`.gitattributes` protects checksummed evidence artifacts from Git line-ending conversion.
+
+Both are project helpers rather than Chronicle schema records.
+
+---
+
+### 3. Let your coding agent establish or maintain the project history
+
+For an existing project that already has development history, a suitable first instruction is:
+
+> Read `chronicle/AGENTS.md` and begin maintaining Chronicle for this project. Inspect the existing project and create only the minimum truthful baseline needed to represent the work already completed, the current accepted state, active work, blockers, and next step. Do not invent unsupported historical detail.
+
+Chronicle is intentionally conservative about milestones. Routine implementation iterations, reviews, test runs, and ordinary code changes normally belong in engineering events or evidence rather than becoming primary History nodes.
+
+---
+
+### 4. Validate the dataset
+
+After creating or changing Chronicle records:
+
+```bash
+chronicle validate ./chronicle
+```
+
+Validation errors must be resolved before the dataset can be served.
+
+Warnings should be reviewed but do not necessarily prevent serving.
+
+---
+
+### 5. Open the Chronicle UI
+
+```bash
+chronicle serve ./chronicle
+```
+
+Open the localhost URL printed by Chronicle.
+
+The application provides:
+
+- **Current** — accepted project state, active work, blockers, and next step;
+- **History** — chronological branching milestone history;
+- **Roadmap** — forward-looking planned work;
+- **Milestone Detail** — context, engineering events, evidence, diffs, and neighboring milestones.
+
+The server binds only to `127.0.0.1` and defaults to port `4317`.
+
+---
+
+## If the repository already contains `chronicle/`
+
+Do **not** run `chronicle init` again.
+
+For a freshly cloned project that already tracks Chronicle data:
+
+```bash
+git clone <repository-url>
+cd my-project
+
+chronicle validate ./chronicle
+chronicle serve ./chronicle
+```
+
+If Chronicle is not installed on that machine yet, install it globally first:
+
+```bash
+npm install -g /path/to/project-chronicle-<version>.tgz
+```
+
+The commands have distinct purposes:
+
+```text
+chronicle init      create a Chronicle dataset once
+chronicle validate  check an existing dataset
+chronicle serve     open an existing dataset in the local UI
+```
+
+---
+
+## Track Chronicle with the project
+
+The project-local `chronicle/` directory is intended to be committed with the project:
+
+```bash
+git add chronicle
+git commit -m "Add Project Chronicle documentation"
+```
+
+Because empty collection directories are not required, Chronicle survives normal Git commit/clone workflows without placeholder files such as `.gitkeep`.
+
+The dataset-local `.gitattributes` preserves the exact bytes of files below `evidence/artifacts/`, which is required for SHA-256 evidence validation across Windows and Linux checkouts.
+
+---
+
+# Updating Chronicle itself
+
+The Chronicle application and a project's Chronicle dataset are separate:
+
+```text
+Globally installed Chronicle application
+        +
+Project-local chronicle/ dataset
+```
+
+Updating the Chronicle application does not recreate or replace project history.
+
+For ordinary backward-compatible releases, a consumer installs the new package globally and continues using the same dataset.
+
+Example:
+
+```bash
+npm install -g /path/to/project-chronicle-0.2.0.tgz
+
+cd /path/to/my-project
+chronicle validate ./chronicle
+chronicle serve ./chronicle
+```
+
+Do **not** run `chronicle init` again after upgrading the application.
+
+If a future release introduces an incompatible dataset-schema change, that release must provide an explicit compatibility or migration path.
+
+---
+
+# Developing and packaging Chronicle
+
+This section is for contributors working on Chronicle itself, not consumers using Chronicle in another project.
 
 ## Requirements
 
 - Node.js 20.19 or newer
 - Linux or Windows development machine
-- Google Chrome for the tracked visual and packaged-browser release checks
+- Google Chrome for tracked visual and packaged-browser release checks
 
-## Developing Chronicle itself
+## Install the locked development dependencies
 
-From a Chronicle source checkout, install the already-locked dependencies, build, and create the tested local package:
+From a Chronicle source checkout:
 
-```text
+```bash
 npm ci
-npm run build
-npm pack
 ```
 
-This creates `project-chronicle-<version>.tgz` in the repository root. It is a generated local package artifact, is ignored by Git, and should not be committed. The v1 package is intentionally marked private and is not published to the public npm registry.
+`package-lock.json` is tracked and should remain the reproducible dependency lock for Chronicle development.
 
-For repository development and release verification:
+Prefer `npm ci` over routine `npm install` when working from the repository's existing lockfile.
 
-```text
-npm ci
+## Build and test
+
+```bash
 npm run build
 npm run check
 npm run release:check
 ```
 
-`release:check` runs schema/type drift checks, the clean production build, unit/component/integration tests, the reviewed History screenshot suite plus geometry/accessibility checks, a runtime-only tarball inspection, an unrelated-directory production install, installed CLI/HTTP smoke tests, and the packaged-browser CSP/accessibility flow.
+`release:check` covers schema/type drift, production build, automated tests, reviewed History visual checks, package inspection, installed CLI/HTTP smoke tests, and packaged-browser security/accessibility checks.
 
-The Chronicle source repository keeps `main` as its single authoritative branch. Feature branches flow through review into `main`; version tags, releases, and their packaged `.tgz` artifacts form the consumer distribution boundary. A separate long-lived consumer branch is not maintained.
+## Create a distributable package
 
-## Installing Chronicle for use across projects
-
-Install the packed CLI globally once on the machine:
-
-```text
-npm install -g /path/to/project-chronicle-0.1.0.tgz
+```bash
+npm pack --dry-run
+npm pack
 ```
 
-After that, `chronicle` is available from arbitrary directories:
+This produces:
 
 ```text
-chronicle init ./chronicle
-chronicle validate ./chronicle
-chronicle serve ./chronicle
+project-chronicle-<version>.tgz
 ```
 
-This keeps Chronicle out of each consuming project's npm dependency tree. A project does not need to create or modify its own `package.json`, `package-lock.json`, or `node_modules/` merely to maintain Chronicle documentation. Conceptually, one globally installed Chronicle package serves datasets such as `Project A/chronicle/`, `Project B/chronicle/`, and `Project C/chronicle/`; each project tracks only its own Chronicle dataset.
+The tarball is generated package output, is ignored by Git, and should not be committed.
 
-`serve` binds only to `127.0.0.1` and defaults to port `4317`. Open the printed URL to view Current, History, Roadmap, and milestone details. The server reloads and validates the complete dataset for each snapshot request; it exposes no mutation API.
+The package contains the runtime and initialization assets needed by consumers. Chronicle's own tracked project history, examples, tests, and development scratch state are not part of the consumer package.
 
-## Using an existing Chronicle dataset
+## Versioning and release flow
 
-If a cloned repository already contains a `chronicle/` directory, do not initialize it again. Validate and serve the existing tracked dataset:
+`main` is the single authoritative Chronicle source branch.
+
+The intended development and distribution flow is:
 
 ```text
-chronicle validate ./chronicle
-chronicle serve ./chronicle
+feature branch
+    ↓
+review / tests
+    ↓
+main
+    ↓
+version tag / release
+    ↓
+npm pack
+    ↓
+project-chronicle-<version>.tgz
+    ↓
+consumer installs globally
 ```
 
-The three commands have distinct roles: `init` creates a new dataset once, `validate` checks an existing dataset, and `serve` displays an existing dataset in the local read-only UI.
+For example:
 
-## Starting Chronicle in another project
+```bash
+git checkout main
+git pull
 
-With Chronicle globally installed, adoption is one initialization command inside the project:
+npm ci
+npm run release:check
 
-```text
-# one-time machine installation
-npm install -g /path/to/project-chronicle-0.1.0.tgz
+# update the version deliberately as appropriate
 
-# inside any project
-chronicle init ./chronicle
-chronicle validate ./chronicle
-chronicle serve ./chronicle
+npm run build
+npm pack
 ```
 
-`chronicle init` creates `project.yaml`, `roadmap.yaml`, and two dataset-local sidecars: `AGENTS.md` contains Chronicle authoring guidance for AI coding agents, while `.gitattributes` preserves the exact bytes of checksummed files below `evidence/artifacts/` across Git checkouts. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `chronicle/AGENTS.md` can follow those rules while editing Chronicle records. Both files are optional, noncanonical project helpers: older datasets without them remain valid, and neither file affects validation or snapshot semantics.
+A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version.
 
-## Chronicle directory
+Be aware that `npm version` can create a commit and tag, so use it deliberately as part of the chosen release process.
+
+---
+
+# Chronicle dataset structure
+
+A populated Chronicle dataset may look like:
 
 ```text
 chronicle/
@@ -98,26 +305,61 @@ chronicle/
     └── artifacts/
 ```
 
-Collection directories are optional when empty. Their absence represents an empty record or artifact collection, and writers create them when the first record or artifact is added.
+Collection directories are optional when empty.
 
-The normative field contract, ID rules, enums, relations, and invariants are documented in [the v1 public contract](docs/schema/v1-public-contract.md). Canonical timestamps are exact ISO 8601 instants with an explicit UTC offset. `current.updated_at` records operational-summary freshness and remains distinct from a milestone's immutable `occurred_at`.
+The authoritative field contract, ID rules, enums, relations, and invariants are documented in [the v1 public contract](docs/schema/v1-public-contract.md).
 
-Milestones are admitted conservatively: they represent material changes to a human owner's understanding of project state, direction, capability, or validated knowledge. Developer iterations, critic outcomes, test runs, and ordinary code changes normally remain subordinate engineering events and evidence.
+Canonical timestamps use exact ISO 8601 values with an explicit UTC offset.
 
-Accepted historical records are append-only. Later conclusions use new milestones and explicit relations such as `disproves`, `supersedes`, or `reverts_to`; guarded visible revision records are reserved for clerical corrections. Branch IDs define Chronicle visualization lanes, not Git branches.
+`current.updated_at` records when the operational summary was updated and is distinct from a milestone's immutable `occurred_at`.
 
-## Evidence safety
+---
 
-Evidence is untrusted. Text and diffs are escaped and rendered as data; HTML is never injected, SVG evidence is download-only, raster previews require signature validation, raw artifacts use attachment disposition, and filesystem reads enforce root containment and reject symlink escape. The localhost server applies restrictive route-specific Content Security Policies and `X-Content-Type-Options: nosniff`.
+# History and milestone semantics
 
-## V1 operating limits
+Milestones are admitted conservatively. They represent material changes to a human owner's understanding of project state, direction, capability, or validated knowledge.
 
-- Desktop-first History view with a minimap, bounded pan/zoom, rectangle selection, fullscreen navigation, responsive framing, and jump-to-current.
-- Characterized layout envelope: 250 milestones, 12 branches, and 30 projected roadmap items. Larger browser histories may become difficult before the pure layout becomes slow.
-- Unified diffs up to 2 MB render inline. Oversized, binary, invalid-UTF-8, or unparsable artifacts remain downloadable.
-- Escaped text/diff and signature-validated PNG/JPEG/WebP have dedicated previews; other evidence formats are download-only.
-- No browser authoring, automatic Git ingestion, remote hosting, authentication, search/filtering, schema migrations, or database.
+Ordinary developer iterations, critic outcomes, test runs, and routine code changes normally remain subordinate engineering events and evidence.
 
-The difficult fixture under `examples/difficult` exercises branches, a merge with data-owned lane identity, rejected and abandoned paths, a revert, later-disproved knowledge, revisions, blockers, subordinate critic iterations, multiple evidence types, and a ground-truth patch.
+Accepted history is not silently rewritten.
 
-Human orientation remains an explicit release gate. Run the tracked [five-participant orientation study](docs/usability/orientation-study.md); it has not yet been executed for this initial implementation, and automated browser checks must not be reported as human-study results.
+Later conclusions should be recorded as new milestones with explicit relations such as:
+
+- `disproves`
+- `supersedes`
+- `reverts_to`
+
+Visible guarded revisions are reserved for clerical corrections.
+
+Chronicle branch IDs describe visualization lanes and development-history divergence; they are not Git branches.
+
+---
+
+# Evidence integrity and safety
+
+Evidence artifacts may include logs, reports, benchmarks, screenshots, profiler output, and exact code patches.
+
+Checksummed evidence is byte-exact. Do not normalize or rewrite an evidence artifact after hashing it, and do not change a declared SHA-256 merely to make validation succeed.
+
+Chronicle treats evidence as untrusted:
+
+- text and diffs are rendered as escaped data;
+- HTML is never injected;
+- SVG evidence is download-only;
+- raster previews require signature validation;
+- raw artifacts use attachment disposition;
+- filesystem access enforces dataset-root containment and rejects symlink escape;
+- the localhost server applies restrictive Content Security Policy headers and `X-Content-Type-Options: nosniff`.
+
+---
+
+# V1 operating limits
+
+- Desktop-first History view with minimap, pan/zoom, rectangle zoom selection, fullscreen navigation, and jump-to-current.
+- Characterized layout envelope: 250 milestones, 12 branches, and 30 projected roadmap items.
+- Unified diffs up to 2 MB render inline; oversized, binary, invalid-UTF-8, or unparsable artifacts remain downloadable.
+- No browser authoring, automatic Git ingestion, remote hosting, authentication, database, or schema-migration system in v1.
+
+The difficult fixture under `examples/difficult` exercises complex branching, merges, rejected paths, a revert, later-disproved knowledge, revisions, blockers, subordinate critic iterations, multiple evidence types, and a ground-truth patch.
+
+Human orientation remains an explicit release gate. The tracked study protocol is at [docs/usability/orientation-study.md](docs/usability/orientation-study.md).
