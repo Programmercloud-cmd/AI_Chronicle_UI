@@ -1,6 +1,8 @@
-import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -9,6 +11,11 @@ import { loadChronicle } from "../../src/data";
 import { validateChronicle } from "../../src/domain";
 
 const temporaryRoots: string[] = [];
+const execFileAsync = promisify(execFile);
+
+async function git(cwd: string, ...args: string[]): Promise<void> {
+  await execFileAsync("git", args, { cwd, encoding: "utf8" });
+}
 
 function capture(): { io: { stdout: { write(text: string): void }; stderr: { write(text: string): void } }; stdout: string[]; stderr: string[] } {
   const stdout: string[] = [];
@@ -41,12 +48,42 @@ describe("Chronicle CLI", () => {
     const maintainedAttributes = await readFile(path.resolve("templates/chronicle/.gitattributes"));
     expect(generatedAttributes.equals(maintainedAttributes)).toBe(true);
     expect(generatedAttributes.toString("utf8")).toBe("evidence/artifacts/** -text\n");
-    await Promise.all([
-      ".gitattributes", "project.yaml", "roadmap.yaml", "branches", "milestones", "engineering-events",
-      "revisions", "evidence/records", "evidence/artifacts/diffs", "evidence/artifacts/logs",
-      "evidence/artifacts/reports", "evidence/artifacts/screenshots",
-    ].map((relativePath) => stat(path.join(root, ...relativePath.split("/")))));
+    expect((await readdir(root)).sort()).toEqual([
+      ".gitattributes",
+      "AGENTS.md",
+      "project.yaml",
+      "roadmap.yaml",
+    ]);
     expect(output.stdout.join("")).toContain("Initialized Chronicle");
+  });
+
+  it("keeps an initialized dataset valid after a Git commit and clean clone", async () => {
+    const parent = await mkdtemp(path.join(tmpdir(), "chronicle-cli-portability-"));
+    temporaryRoots.push(parent);
+    const source = path.join(parent, "source");
+    const clone = path.join(parent, "clone");
+    await mkdir(source);
+    expect((await executeCli(["init", path.join(source, "chronicle")], capture().io)).exitCode).toBe(0);
+
+    await git(source, "init");
+    await git(source, "add", ".");
+    await git(
+      source,
+      "-c", "user.name=Chronicle Test",
+      "-c", "user.email=chronicle@example.invalid",
+      "commit", "-m", "Initialize Chronicle",
+    );
+    await git(parent, "clone", source, clone);
+
+    expect((await readdir(path.join(clone, "chronicle"))).sort()).toEqual([
+      ".gitattributes",
+      "AGENTS.md",
+      "project.yaml",
+      "roadmap.yaml",
+    ]);
+    const validation = capture();
+    expect((await executeCli(["validate", path.join(clone, "chronicle")], validation.io)).exitCode).toBe(0);
+    expect(JSON.parse(validation.stdout.join(""))).toEqual({ valid: true, warnings: [] });
   });
 
   it("refuses to overwrite an existing path", async () => {

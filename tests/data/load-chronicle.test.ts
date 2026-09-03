@@ -11,6 +11,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { loadChronicle } from "../../src/data";
+import { validateChronicle } from "../../src/domain";
 
 const temporaryRoots: string[] = [];
 
@@ -45,6 +46,36 @@ async function createMinimalChronicle(label: string): Promise<string> {
     items: [],
   });
   return root;
+}
+
+async function expectSemanticCode(root: string, code: string): Promise<void> {
+  const loaded = await loadChronicle(root);
+  expect(loaded.ok).toBe(true);
+  if (!loaded.ok) return;
+  const validated = await validateChronicle(loaded.value);
+  expect(validated.ok).toBe(false);
+  if (!validated.ok) {
+    expect(validated.diagnostics).toContainEqual(expect.objectContaining({ code }));
+  }
+}
+
+async function writeMilestone(
+  root: string,
+  id: string,
+  overrides: Record<string, unknown> = {},
+): Promise<void> {
+  await writeJson(root, `milestones/${id}.yaml`, {
+    schema_version: 1,
+    id,
+    occurred_at: "2026-08-19T12:00:00Z",
+    recorded_at: "2026-08-19T12:01:00Z",
+    title: id,
+    summary: "Test milestone",
+    branch_id: "BR-MAIN",
+    parents: [],
+    status: "accepted",
+    ...overrides,
+  });
 }
 
 afterEach(async () => {
@@ -108,6 +139,31 @@ describe("loadChronicle examples", () => {
     if (!withResult.ok) return;
     expect(JSON.stringify(withResult.value)).not.toContain("Agent guidance");
   });
+
+  it.each([
+    ["branches", "branches"],
+    ["milestones", "milestones"],
+    ["engineering-events", "engineeringEvents"],
+    ["revisions", "revisions"],
+  ] as const)("treats a missing %s collection as empty", async (directory, key) => {
+    const root = await createMinimalChronicle(`missing-${directory}`);
+    await rm(path.join(root, directory), { recursive: true, force: true });
+
+    const result = await loadChronicle(root);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value[key]).toEqual([]);
+  });
+
+  it("treats missing evidence record and artifact collections as empty", async () => {
+    const root = await createMinimalChronicle("missing-evidence");
+    await rm(path.join(root, "evidence"), { recursive: true });
+
+    const result = await loadChronicle(root);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.evidence).toEqual([]);
+  });
 });
 
 describe("loadChronicle failure behavior", () => {
@@ -139,24 +195,17 @@ describe("loadChronicle failure behavior", () => {
     );
   });
 
-  it("reports a missing required directory", async () => {
-    const root = await createMinimalChronicle("missing-directory");
-    await rm(path.join(root, "milestones"), { recursive: true });
-
-    const result = await loadChronicle(root);
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.diagnostics).toContainEqual(
-      expect.objectContaining({
-        code: "missing-required",
-        sourcePath: "milestones",
-      }),
-    );
-  });
-
-  it("rejects wrong extensions rather than silently skipping them", async () => {
-    const root = await createMinimalChronicle("extension");
-    await writeFile(path.join(root, "branches", "BR-MAIN.yml"), "ignored: false\n");
+  it.each([
+    "branches",
+    "milestones",
+    "engineering-events",
+    "revisions",
+    "evidence/records",
+  ])("strictly validates entries when the %s collection exists", async (directory) => {
+    const root = await createMinimalChronicle(`extension-${directory.replace("/", "-")}`);
+    const invalid = path.join(root, ...directory.split("/"), "placeholder.txt");
+    await mkdir(path.dirname(invalid), { recursive: true });
+    await writeFile(invalid, "not a Chronicle record\n");
 
     const result = await loadChronicle(root);
     expect(result.ok).toBe(false);
@@ -164,9 +213,66 @@ describe("loadChronicle failure behavior", () => {
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({
         code: "unexpected-entry",
-        sourcePath: "branches/BR-MAIN.yml",
+        sourcePath: `${directory}/placeholder.txt`,
       }),
     );
+  });
+
+  it("does not let missing milestones suppress an invalid current reference", async () => {
+    const root = await createMinimalChronicle("missing-current-milestone");
+    await rm(path.join(root, "milestones"), { recursive: true });
+    await writeJson(root, "current.yaml", {
+      schema_version: 1,
+      updated_at: "2026-08-19T12:02:00Z",
+      milestone_id: "CORE-001",
+      state: "Missing milestone must remain invalid.",
+    });
+
+    await expectSemanticCode(root, "current-milestone-missing");
+  });
+
+  it("does not let an optional milestone collection suppress a missing parent", async () => {
+    const root = await createMinimalChronicle("missing-parent");
+    await writeJson(root, "branches/BR-MAIN.yaml", {
+      schema_version: 1,
+      id: "BR-MAIN",
+      title: "Main",
+    });
+    await writeMilestone(root, "CORE-002", { parents: ["CORE-001"] });
+
+    await expectSemanticCode(root, "parent-missing");
+  });
+
+  it("does not let missing evidence collections suppress a milestone evidence reference", async () => {
+    const root = await createMinimalChronicle("missing-evidence-reference");
+    await rm(path.join(root, "evidence"), { recursive: true });
+    await writeJson(root, "branches/BR-MAIN.yaml", {
+      schema_version: 1,
+      id: "BR-MAIN",
+      title: "Main",
+    });
+    await writeMilestone(root, "CORE-001", { evidence: ["EVD-0001"] });
+
+    await expectSemanticCode(root, "milestone-evidence-missing");
+  });
+
+  it("does not let missing milestones suppress invalid roadmap relationships", async () => {
+    const root = await createMinimalChronicle("missing-roadmap-milestone");
+    await rm(path.join(root, "milestones"), { recursive: true });
+    await writeJson(root, "roadmap.yaml", {
+      schema_version: 1,
+      updated_at: "2026-08-19T12:00:00Z",
+      items: [{
+        id: "RM-001",
+        title: "Impossible completion",
+        status: "completed",
+        order: 10,
+        acceptance_criteria: ["Referenced milestone exists."],
+        related_milestones: ["CORE-001"],
+      }],
+    });
+
+    await expectSemanticCode(root, "roadmap-milestone-missing");
   });
 
   it("requires record filename and ID to match exactly", async () => {

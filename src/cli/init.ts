@@ -1,11 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const directories = [
-  "branches", "milestones", "engineering-events", "revisions", "evidence/records",
-  "evidence/artifacts/diffs", "evidence/artifacts/logs", "evidence/artifacts/reports", "evidence/artifacts/screenshots",
-];
-
 async function readDatasetTemplate(name: string, description: string): Promise<Buffer> {
   const candidates = [
     path.resolve(__dirname, `../../templates/chronicle/${name}`),
@@ -38,7 +33,6 @@ export async function initializeChronicle(rootPath: string, now = new Date()): P
   try {
     await mkdir(resolved);
     created = true;
-    for (const directory of directories) await mkdir(path.join(resolved, ...directory.split("/")), { recursive: true });
     await writeFile(path.join(resolved, "AGENTS.md"), agentGuide, { flag: "wx" });
     await writeFile(path.join(resolved, ".gitattributes"), gitAttributes, { flag: "wx" });
     const id = projectId(resolved);

@@ -78,7 +78,7 @@ chronicle validate ./chronicle
 chronicle serve ./chronicle
 ```
 
-`chronicle init` creates the data scaffold plus two dataset-local sidecars: `AGENTS.md` contains Chronicle authoring guidance for AI coding agents, while `.gitattributes` preserves the exact bytes of checksummed files below `evidence/artifacts/` across Git checkouts. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `chronicle/AGENTS.md` can follow those rules while editing Chronicle records. Both files are optional, noncanonical project helpers: older datasets without them remain valid, and neither file affects validation or snapshot semantics.
+`chronicle init` creates `project.yaml`, `roadmap.yaml`, and two dataset-local sidecars: `AGENTS.md` contains Chronicle authoring guidance for AI coding agents, while `.gitattributes` preserves the exact bytes of checksummed files below `evidence/artifacts/` across Git checkouts. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `chronicle/AGENTS.md` can follow those rules while editing Chronicle records. Both files are optional, noncanonical project helpers: older datasets without them remain valid, and neither file affects validation or snapshot semantics.
 
 ## Chronicle directory
 
@@ -97,6 +97,8 @@ chronicle/
     ├── records/
     └── artifacts/
 ```
+
+Collection directories are optional when empty. Their absence represents an empty record or artifact collection, and writers create them when the first record or artifact is added.
 
 The normative field contract, ID rules, enums, relations, and invariants are documented in [the v1 public contract](docs/schema/v1-public-contract.md). Canonical timestamps are exact ISO 8601 instants with an explicit UTC offset. `current.updated_at` records operational-summary freshness and remains distinct from a milestone's immutable `occurred_at`.
 

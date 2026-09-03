@@ -130,10 +130,9 @@ async function loadSingleRecord<K extends ChronicleRecordKind>(
   return { ok: true, value: { sourcePath, value: shape.value } };
 }
 
-async function requireAuthoritativeDirectory(
+async function resolveAuthoritativeDirectory(
   root: ChronicleRoot,
   sourcePath: string,
-  required: boolean,
 ): Promise<DataResult<string | undefined>> {
   const segments = sourcePath.split("/");
   let current = root.realPath;
@@ -155,16 +154,14 @@ async function requireAuthoritativeDirectory(
         };
       }
     } catch (error) {
-      if (!required && isMissing(error)) return { ok: true, value: undefined };
+      if (isMissing(error)) return { ok: true, value: undefined };
       return {
         ok: false,
         diagnostics: [
           {
-            code: required && isMissing(error) ? "missing-required" : "read-failed",
+            code: "read-failed",
             sourcePath,
-            message: isMissing(error)
-              ? "required record directory is missing"
-              : `cannot inspect record directory: ${error instanceof Error ? error.message : String(error)}`,
+            message: `cannot inspect record directory: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],
       };
@@ -178,12 +175,11 @@ async function loadRecordDirectory<K extends ChronicleRecordKind>(
   root: ChronicleRoot,
   directory: string,
   kind: K,
-  required: boolean,
 ): Promise<{
   records: SourcedRecord<ChronicleRecordByKind[K]>[];
   diagnostics: DataDiagnostic[];
 }> {
-  const resolved = await requireAuthoritativeDirectory(root, directory, required);
+  const resolved = await resolveAuthoritativeDirectory(root, directory);
   if (!resolved.ok) return { records: [], diagnostics: resolved.diagnostics };
   if (resolved.value === undefined) return { records: [], diagnostics: [] };
 
@@ -316,11 +312,11 @@ export async function loadChronicle(rootPath: string): Promise<DataResult<Chroni
       loadSingleRecord(root, "project.yaml", "project", true),
       loadSingleRecord(root, "current.yaml", "current", false),
       loadSingleRecord(root, "roadmap.yaml", "roadmap", true),
-      loadRecordDirectory(root, "branches", "branch", true),
-      loadRecordDirectory(root, "milestones", "milestone", true),
-      loadRecordDirectory(root, "engineering-events", "engineering-event", true),
-      loadRecordDirectory(root, "revisions", "revision", false),
-      loadRecordDirectory(root, "evidence/records", "evidence", true),
+      loadRecordDirectory(root, "branches", "branch"),
+      loadRecordDirectory(root, "milestones", "milestone"),
+      loadRecordDirectory(root, "engineering-events", "engineering-event"),
+      loadRecordDirectory(root, "revisions", "revision"),
+      loadRecordDirectory(root, "evidence/records", "evidence"),
     ]);
 
   for (const result of [project, current, roadmap]) {

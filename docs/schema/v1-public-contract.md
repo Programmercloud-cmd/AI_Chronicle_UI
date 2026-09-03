@@ -31,6 +31,8 @@ chronicle/
         `-- screenshots/
 ```
 
+Collection directories are optional when empty. Their absence represents an empty record or artifact collection, and writers create them when the first record or artifact is added.
+
 `project.yaml`, `current.yaml`, and `roadmap.yaml` are present-oriented documents and may be replaced intentionally. Branch, milestone, engineering-event, revision, and evidence records are one file per stable ID and append-only after acceptance. Evidence artifacts are immutable byte sequences. Generated indexes and caches are never authoritative.
 
 YAML is parsed as YAML 1.2 with duplicate keys, aliases, custom tags, and merge keys rejected. Timestamps and dates must be quoted strings. Unknown fields are validation errors in v1; adding a field requires a schema-version change or an explicitly backward-compatible contract revision.
