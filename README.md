@@ -98,7 +98,7 @@ Both are project helpers rather than Chronicle schema records.
 
 For an existing project that already has development history, a suitable first instruction is:
 
-> Read `chronicle/AGENTS.md` and begin maintaining Chronicle for this project. Inspect the existing project and create only the minimum truthful baseline needed to represent the work already completed, the current accepted state, active work, blockers, and next step. Do not invent unsupported historical detail.
+> Read `chronicle/AGENTS.md` and begin maintaining Chronicle for this project. Inspect the existing project and create only the truthful baseline needed to represent the work already completed, the current accepted state, active work, blockers, and next step. Do not invent unsupported historical detail.
 
 Chronicle is intentionally conservative about milestones. Routine implementation iterations, reviews, test runs, and ordinary code changes normally belong in engineering events or evidence rather than becoming primary History nodes.
 
