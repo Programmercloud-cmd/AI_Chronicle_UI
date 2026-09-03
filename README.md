@@ -31,6 +31,8 @@ npm run release:check
 
 `release:check` runs schema/type drift checks, the clean production build, unit/component/integration tests, the reviewed History screenshot suite plus geometry/accessibility checks, a runtime-only tarball inspection, an unrelated-directory production install, installed CLI/HTTP smoke tests, and the packaged-browser CSP/accessibility flow.
 
+The Chronicle source repository keeps `main` as its single authoritative branch. Feature branches flow through review into `main`; version tags, releases, and their packaged `.tgz` artifacts form the consumer distribution boundary. A separate long-lived consumer branch is not maintained.
+
 ## Installing Chronicle for use across projects
 
 Install the packed CLI globally once on the machine:
@@ -42,16 +44,27 @@ npm install -g /path/to/project-chronicle-0.1.0.tgz
 After that, `chronicle` is available from arbitrary directories:
 
 ```text
-chronicle init ./dev/chronicle
-chronicle validate ./dev/chronicle
-chronicle serve ./dev/chronicle
+chronicle init ./chronicle
+chronicle validate ./chronicle
+chronicle serve ./chronicle
 ```
 
-This keeps Chronicle out of each consuming project's npm dependency tree. A project does not need to create or modify its own `package.json`, `package-lock.json`, or `node_modules/` merely to maintain Chronicle documentation. Conceptually, one globally installed Chronicle package serves datasets such as `Project A/dev/chronicle/`, `Project B/dev/chronicle/`, and `Project C/dev/chronicle/`; each project contains only its Chronicle dataset.
+This keeps Chronicle out of each consuming project's npm dependency tree. A project does not need to create or modify its own `package.json`, `package-lock.json`, or `node_modules/` merely to maintain Chronicle documentation. Conceptually, one globally installed Chronicle package serves datasets such as `Project A/chronicle/`, `Project B/chronicle/`, and `Project C/chronicle/`; each project tracks only its own Chronicle dataset.
 
 `serve` binds only to `127.0.0.1` and defaults to port `4317`. Open the printed URL to view Current, History, Roadmap, and milestone details. The server reloads and validates the complete dataset for each snapshot request; it exposes no mutation API.
 
-## Using Chronicle in another project
+## Using an existing Chronicle dataset
+
+If a cloned repository already contains a `chronicle/` directory, do not initialize it again. Validate and serve the existing tracked dataset:
+
+```text
+chronicle validate ./chronicle
+chronicle serve ./chronicle
+```
+
+The three commands have distinct roles: `init` creates a new dataset once, `validate` checks an existing dataset, and `serve` displays an existing dataset in the local read-only UI.
+
+## Starting Chronicle in another project
 
 With Chronicle globally installed, adoption is one initialization command inside the project:
 
@@ -60,18 +73,19 @@ With Chronicle globally installed, adoption is one initialization command inside
 npm install -g /path/to/project-chronicle-0.1.0.tgz
 
 # inside any project
-chronicle init ./dev/chronicle
-chronicle validate ./dev/chronicle
-chronicle serve ./dev/chronicle
+chronicle init ./chronicle
+chronicle validate ./chronicle
+chronicle serve ./chronicle
 ```
 
-`chronicle init` creates the data scaffold plus a dataset-local `AGENTS.md` containing Chronicle authoring guidance for AI coding agents. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `dev/chronicle/AGENTS.md` can follow those rules while editing Chronicle records. The guide is optional, noncanonical authoring help: existing datasets without it remain valid, and Chronicle itself does not depend on AI.
+`chronicle init` creates the data scaffold plus two dataset-local sidecars: `AGENTS.md` contains Chronicle authoring guidance for AI coding agents, while `.gitattributes` preserves the exact bytes of checksummed files below `evidence/artifacts/` across Git checkouts. You can then tell an agent, “Maintain the project's Chronicle documentation.” An agent that discovers `chronicle/AGENTS.md` can follow those rules while editing Chronicle records. Both files are optional, noncanonical project helpers: older datasets without them remain valid, and neither file affects validation or snapshot semantics.
 
 ## Chronicle directory
 
 ```text
 chronicle/
 ├── AGENTS.md
+├── .gitattributes
 ├── project.yaml
 ├── current.yaml
 ├── roadmap.yaml

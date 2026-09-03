@@ -23,6 +23,7 @@ import type {
 } from "./types";
 
 const rootEntries = new Set([
+  ".gitattributes",
   "AGENTS.md",
   "project.yaml",
   "current.yaml",

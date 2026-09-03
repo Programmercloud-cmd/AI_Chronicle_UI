@@ -6,6 +6,7 @@
   "files": [
     "dist/",
     "templates/chronicle/AGENTS.md",
+    "templates/chronicle/.gitattributes",
     "README.md",
     "docs/schema/v1-public-contract.md",
     "docs/usability/orientation-study.md"
