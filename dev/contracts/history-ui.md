@@ -1,0 +1,3 @@
+# Component contract: history-ui
+
+Render accepted pure timeline layout as the canonical sparse History view. Inspect `docs/design/history_timeline_reference.png`. SVG/HTML must show chronology, explicit lanes/ancestry, diagonal labels, exact timestamps, current marker, muted explicit future nodes, bottom month bands, horizontal scroll and jump-to-current. Hover content must be focus-accessible; branch/current state not color-only; light/dark. No fixed mock coordinates. Semantic correctness precedes fidelity. Component/axe/browser interaction plus deterministic screenshot fixtures and independent actual-app visual critic required.

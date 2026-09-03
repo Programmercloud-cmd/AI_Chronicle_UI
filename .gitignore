@@ -217,9 +217,11 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Local Codex gauntlet infrastructure (manually backed up; never committed)
-/AGENTS.md
-/dev/
+# Durable Chronicle development guidance under `dev/` is tracked. Keep only
+# disposable gauntlet output and machine-generated working state local.
+/dev/evidence/
+/dev/runs/
+/dev/scratch/
 
 # Project Chronicle build and dependency output
 /node_modules/

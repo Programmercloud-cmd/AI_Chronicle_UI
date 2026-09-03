@@ -37,8 +37,12 @@ describe("Chronicle CLI", () => {
     const maintainedGuide = await readFile(path.resolve("templates/chronicle/AGENTS.md"));
     expect(generatedGuide.equals(maintainedGuide)).toBe(true);
     expect(generatedGuide.toString("utf8")).toContain("# Project Chronicle — Agent Authoring Guide");
+    const generatedAttributes = await readFile(path.join(root, ".gitattributes"));
+    const maintainedAttributes = await readFile(path.resolve("templates/chronicle/.gitattributes"));
+    expect(generatedAttributes.equals(maintainedAttributes)).toBe(true);
+    expect(generatedAttributes.toString("utf8")).toBe("evidence/artifacts/** -text\n");
     await Promise.all([
-      "project.yaml", "roadmap.yaml", "branches", "milestones", "engineering-events",
+      ".gitattributes", "project.yaml", "roadmap.yaml", "branches", "milestones", "engineering-events",
       "revisions", "evidence/records", "evidence/artifacts/diffs", "evidence/artifacts/logs",
       "evidence/artifacts/reports", "evidence/artifacts/screenshots",
     ].map((relativePath) => stat(path.join(root, ...relativePath.split("/")))));

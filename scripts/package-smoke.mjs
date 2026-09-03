@@ -96,6 +96,10 @@ async function stopInstalledServer() {
 }
 
 try {
+  const maintainedGuide = await readFile(path.join(repositoryRoot, "templates", "chronicle", "AGENTS.md"));
+  const repositoryGuide = await readFile(path.join(repositoryRoot, "chronicle", "AGENTS.md"));
+  assert(repositoryGuide.equals(maintainedGuide), "chronicle/AGENTS.md is out of sync with its maintained template");
+
   stage("packing repository");
   const packed = JSON.parse(npm(["pack", "--json", "--pack-destination", packDirectory]));
   const metadata = packed[0];
@@ -107,13 +111,14 @@ try {
     "dist/schema/v1/project.schema.json",
     "dist/web/index.html",
     "templates/chronicle/AGENTS.md",
+    "templates/chronicle/.gitattributes",
     "docs/schema/v1-public-contract.md",
     "docs/usability/orientation-study.md",
     "README.md",
     "package.json",
   ]) assert(files.includes(required), `package is missing ${required}`);
   const forbidden = files.filter((file) =>
-    /^(?:src|tests|examples|scripts|test-results|dev)\//u.test(file) ||
+    /^(?:src|tests|examples|scripts|test-results|dev|chronicle)\//u.test(file) ||
     (file.startsWith("docs/") && ![
       "docs/schema/v1-public-contract.md",
       "docs/usability/orientation-study.md",
@@ -132,8 +137,11 @@ try {
   stage("initializing and validating through clean local install");
   run(process.execPath, [bin, "init", initialized], consumerDirectory);
   const installedTemplate = await readFile(path.join(consumerDirectory, "node_modules", "project-chronicle", "templates", "chronicle", "AGENTS.md"));
+  const installedAttributesTemplate = await readFile(path.join(consumerDirectory, "node_modules", "project-chronicle", "templates", "chronicle", ".gitattributes"));
   const initializedGuide = await readFile(path.join(initialized, "AGENTS.md"));
+  const initializedAttributes = await readFile(path.join(initialized, ".gitattributes"));
   assert(initializedGuide.equals(installedTemplate), "installed CLI did not copy its packaged AGENTS.md template byte-for-byte");
+  assert(initializedAttributes.equals(installedAttributesTemplate), "installed CLI did not copy its packaged .gitattributes template byte-for-byte");
   const validation = run(process.execPath, [bin, "validate", initialized], consumerDirectory);
   assert(validation.includes('"valid": true'), "installed CLI did not validate its initialized dataset");
 
@@ -147,7 +155,9 @@ try {
   if (process.platform === "win32") run("cmd.exe", ["/d", "/s", "/c", globalBin, "init", globalInitialized], consumerDirectory);
   else run(globalBin, ["init", globalInitialized], consumerDirectory);
   const globalGuide = await readFile(path.join(globalInitialized, "AGENTS.md"));
+  const globalAttributes = await readFile(path.join(globalInitialized, ".gitattributes"));
   assert(globalGuide.equals(installedTemplate), "globally installed CLI did not copy its packaged AGENTS.md template byte-for-byte");
+  assert(globalAttributes.equals(installedAttributesTemplate), "globally installed CLI did not copy its packaged .gitattributes template byte-for-byte");
 
   const canonicalValidation = run(process.execPath, [bin, "validate", path.join(repositoryRoot, "examples", "canonical")], consumerDirectory);
   assert(canonicalValidation.includes('"valid": true'), "installed CLI did not validate canonical data");
@@ -201,7 +211,7 @@ try {
   process.stdout.write(`${JSON.stringify({
     package: { entries: metadata.entryCount, packedBytes: metadata.size, unpackedBytes: metadata.unpackedSize },
     install: ["production-only", "global"],
-    cli: ["init", "global-init", "validate-initialized", "validate-canonical"],
+    cli: ["init-with-sidecars", "global-init-with-sidecars", "validate-initialized", "validate-canonical"],
     origin,
     http: ["/", "/history", "/roadmap", "/milestones/TIM-002", assetPath, "/api/snapshot", "/api/evidence/EVD-0001/preview", "/api/evidence/EVD-0001/raw"],
     browser: ["canonical:PASS", "difficult:PASS"],
