@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   release:
@@ -55,14 +56,57 @@ jobs:
             exit 1
           fi
 
-      - name: Install locked dependencies
-        run: npm ci
+      - name: Require successful canonical CI for the tagged commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          tag_commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          max_attempts=20
+          wait_seconds=15
 
-      - name: Audit production dependencies
-        run: npm audit --omit=dev
+          for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+            runs_json="$(gh api --method GET \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+              -f event=push \
+              -f branch=main \
+              -f head_sha="$tag_commit" \
+              -f per_page=20)"
+
+            if jq -e --arg sha "$tag_commit" \
+              '.workflow_runs[] | select(.head_sha == $sha and .head_branch == "main" and .event == "push" and .status == "completed" and .conclusion == "success")' \
+              <<<"$runs_json" >/dev/null; then
+              run_url="$(jq -r --arg sha "$tag_commit" \
+                '[.workflow_runs[] | select(.head_sha == $sha and .head_branch == "main" and .event == "push" and .status == "completed" and .conclusion == "success")][0].html_url' \
+                <<<"$runs_json")"
+              echo "Canonical CI succeeded for tagged commit $tag_commit: $run_url"
+              exit 0
+            fi
+
+            if ((attempt < max_attempts)); then
+              echo "Canonical CI has not succeeded for tagged commit $tag_commit (attempt $attempt/$max_attempts); waiting ${wait_seconds}s."
+              sleep "$wait_seconds"
+            fi
+          done
+
+          echo "::error::No successful push run of ci.yml was found for tagged commit $tag_commit after $max_attempts attempts. Push the version commit to main and wait for canonical CI before creating the tag."
+          jq -r --arg sha "$tag_commit" \
+            '.workflow_runs[] | select(.head_sha == $sha and .head_branch == "main" and .event == "push") | "Observed run: status=\(.status), conclusion=\(.conclusion // "pending"), url=\(.html_url)"' \
+            <<<"$runs_json"
+          exit 1
 
       - name: Run the authoritative release gate
         run: npm run release:check
+
+      - name: Upload visual failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-visual-failure-${{ github.run_id }}
+          path: test-results/**
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Pack and checksum the release artifact
         id: artifacts

@@ -45,7 +45,34 @@ After an application upgrade, run `chronicle validate ./chronicle` and `chronicl
 
 ## Maintainer workflow
 
-Release only an accepted `main` commit from a clean working tree. The normal patch release commands are:
+### Canonical checks
+
+Chronicle maintains one authoritative visual baseline. Its exact environment is:
+
+- Linux/amd64;
+- the official Playwright Noble image `mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e`;
+- `@playwright/test` 1.62.1 and its managed headless Chromium build;
+- the viewport, locale, timezone, scale, and animation settings tracked in the Playwright configuration.
+
+There is no Windows baseline and no host-Chrome fallback. `npm run check` is the fast native build and unit-test loop. The public `npm run release:check` command always enters the pinned Linux container, performs the locked install and production audit, and invokes the nonrecursive inner release gate. Windows maintainers must enable Docker Desktop's Linux-container mode. If Docker is unavailable, the command fails clearly; use pull-request CI for the canonical result instead of updating screenshots on Windows.
+
+For an intentional visual change:
+
+1. Make the UI or visual-test change and ensure the snapshot directory contains no unrelated edits.
+2. Run `npm run test:visual:update -- --confirm`. It generates images only inside the canonical container and refuses CI or a dirty snapshot directory.
+3. Inspect every changed snapshot. Check wrapping, clipping, overlap, responsive behavior, hover/focus state, and detail views; do not accept a bulk regeneration solely because pixels changed.
+4. Run comparison-only `npm run release:check` without any snapshot-update flag; all visual cases and the complete gate must pass against the newly generated files.
+5. Commit the reviewed snapshots with the intentional source/test change and canonical environment evidence. An independent read-only critic must accept every changed case.
+
+CI and release workflows never use `--update-snapshots`. On visual failure they retain `test-results/**`, including expected, actual, and diff PNGs, as a GitHub Actions artifact for 14 days. A Playwright version or container digest change is a deliberate environment-and-baseline migration and receives the same independent review.
+
+### Pull-request and main gate
+
+`.github/workflows/ci.yml` runs `npm run release:check` for pull requests targeting `main` and every push to `main`. Configure branch protection to require its stable `Canonical release gate` job before merge. The workflow has read-only `contents: read` permission and uses the same public container launcher as local and release checks, so tags are not the first place canonical CI runs.
+
+### Version and release
+
+Release only an accepted `main` commit from a clean working tree. For the next patch release:
 
 ```bash
 git checkout main
@@ -54,24 +81,30 @@ git pull --ff-only
 npm ci
 npm run release:check
 
-npm version patch --git-tag-version=true --tag-version-prefix=v
-VERSION="$(node -p "require('./package.json').version")"
-
+npm version patch --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore(release): v0.2.1"
 git push origin main
-git push origin "v${VERSION}"
 ```
 
-Use `npm version minor --git-tag-version=true --tag-version-prefix=v` or `npm version major --git-tag-version=true --tag-version-prefix=v` when appropriate.
+Wait for `.github/workflows/ci.yml` to complete successfully for the exact version-commit SHA. If it fails, repair the version commit and obtain a successful exact-SHA run before creating any tag. Then create and push the annotated tag:
 
-`npm version` updates `package.json` and `package-lock.json`, creates the version commit, and creates the matching `v<version>` Git tag. Review those results before pushing. Pushing `main` alone does not publish a release; pushing the version tag starts `.github/workflows/release.yml`.
+```bash
+git tag -a v0.2.1 -m "Project Chronicle v0.2.1"
+git push origin v0.2.1
+```
+
+Use `npm version minor --no-git-tag-version` or `npm version major --no-git-tag-version` when appropriate, and substitute that version consistently in the commit and tag.
+
+`--no-git-tag-version` updates the manifests without creating a commit or tag, preventing a stale local tag if canonical main CI requires repair. Pushing `main` alone does not publish a release; pushing the annotated version tag starts `.github/workflows/release.yml`.
 
 The GitHub-hosted release job:
 
 ```text
 tag/package version validation
+→ tagged commit ancestry validation
 → reject an existing release
-→ npm ci
-→ npm audit --omit=dev
+→ require a successful ci.yml push run for the exact tagged SHA
 → npm run release:check
 → npm pack
 → package allow-list validation
@@ -84,8 +117,10 @@ The release contains:
 - `project-chronicle-<version>.tgz`
 - `SHA256SUMS.txt`
 
-The workflow uses only the built-in `GITHUB_TOKEN`, scoped in the workflow to `contents: write`. Repository owners must ensure GitHub Actions is enabled and that repository or organization policy allows this workflow to run and create releases. Keep the repository-wide default workflow permission restricted; do not enable broad read/write defaults for this release. No npm-registry token or personal access token is required.
+The release queries workflow runs, rather than check runs, for an exact-SHA successful `push` run of `ci.yml` on `main`. It uses only the built-in `GITHUB_TOKEN`, scoped to `contents: write` for release publication and `actions: read` for that workflow-run lookup. No PAT, `checks: read`, npm-registry token, or broader workflow permission is required. Keep the repository-wide default permission restricted and ensure repository policy allows GitHub Actions to create releases.
 
 Existing releases are immutable. If a release tag already has a GitHub Release, the workflow fails; make the correction in a new patch version instead. Do not delete and replace a published artifact.
+
+The remote `v0.2.0` tag from the failed first attempt remains untouched and unpublished. Do not move, delete/recreate, or silently reuse it. The first corrected release is `v0.2.1`, created only after its version commit has successful canonical main CI.
 
 For local package development only, `npm pack --dry-run` remains useful. Maintainers do not run `npm pack` as part of the normal production release flow.

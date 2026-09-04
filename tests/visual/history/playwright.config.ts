@@ -13,7 +13,12 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:5173",
     browserName: "chromium",
-    channel: "chrome",
+    headless: true,
+    colorScheme: "light",
+    deviceScaleFactor: 1,
+    locale: "en-US",
+    reducedMotion: "reduce",
+    timezoneId: "UTC",
     viewport: { width: 2048, height: 1000 },
   },
 });

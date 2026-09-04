@@ -47,6 +47,10 @@ class ReleaseResizeObserver {
     } as ResizeObserverEntry;
     this.callback([entry], this as unknown as ResizeObserver);
   }
+
+  isObserving(): boolean {
+    return this.target !== undefined;
+  }
 }
 
 beforeAll(async () => {
@@ -101,9 +105,8 @@ function renderBrowserShell(pathname = "/history") {
 
 async function latestReleaseObserver(): Promise<ReleaseResizeObserver> {
   return waitFor(() => {
-    const observer = ReleaseResizeObserver.instances.at(-1);
-    if (observer === undefined) throw new Error("History did not create a ResizeObserver");
-    expect(observer.observe).toHaveBeenCalled();
+    const observer = ReleaseResizeObserver.instances.findLast((candidate) => candidate.isObserving());
+    if (observer === undefined) throw new Error("History did not attach a ResizeObserver target");
     return observer;
   });
 }

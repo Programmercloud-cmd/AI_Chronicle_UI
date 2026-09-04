@@ -220,7 +220,9 @@ This section is for contributors working on Chronicle itself, not consumers usin
 
 - Node.js 20.19 or newer
 - Linux or Windows development machine
-- Google Chrome for tracked visual and packaged-browser release checks
+- Docker with Linux containers enabled for canonical visual and release checks
+
+Chronicle has one authoritative visual environment: Linux/amd64 in the official Playwright 1.62.1 Noble image pinned by digest. It uses Playwright's managed Chromium, not Chrome installed on the host. Windows-rendered screenshots are useful for local debugging but are not visual baselines.
 
 ## Install the locked development dependencies
 
@@ -242,7 +244,9 @@ npm run check
 npm run release:check
 ```
 
-`release:check` covers schema/type drift, production build, automated tests, reviewed History visual checks, package inspection, installed CLI/HTTP smoke tests, and packaged-browser security/accessibility checks.
+`npm run check` is the fast native development loop. `npm run release:check` launches the pinned Linux container and covers the locked install, production dependency audit, schema/type drift, production build, automated tests, reviewed History visual checks, package inspection, installed CLI/HTTP smoke tests, and packaged-browser security/accessibility checks. On Windows, Docker Desktop must be using Linux containers; if Docker is unavailable the command fails rather than comparing against a Windows baseline. Pull-request CI can provide the authoritative result when a workstation cannot run Docker.
+
+Intentional screenshot changes are generated only through `npm run test:visual:update -- --confirm` in the canonical container. Review every changed PNG and include it with the UI or visual-test change. CI and ordinary release checks compare screenshots only and never regenerate them. See `CHRONICLE_WORKFLOWS.md` for the complete baseline review procedure.
 
 ## Inspect a package locally
 
@@ -270,13 +274,17 @@ The intended development and distribution flow is:
 ```text
 feature branch
     ↓
-review / tests
+canonical PR review / tests
     ↓
 main
     ↓
-version commit and tag
+untagged version commit
     ↓
-GitHub Actions release gates and npm pack
+successful canonical main CI for the exact commit
+    ↓
+annotated version tag
+    ↓
+GitHub Actions repeats release gates and runs npm pack
     ↓
 project-chronicle-<version>.tgz
     ↓
@@ -292,20 +300,28 @@ git pull --ff-only
 npm ci
 npm run release:check
 
-npm version patch --git-tag-version=true --tag-version-prefix=v
-VERSION="$(node -p "require('./package.json').version")"
-
+npm version patch --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore(release): v0.2.1"
 git push origin main
-git push origin "v${VERSION}"
 ```
 
-A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version. Substitute `minor` or `major` in the `npm version` command when appropriate.
+Wait for the `Canonical release gate` job in `.github/workflows/ci.yml` to succeed for that exact version-commit SHA. Do not create a local tag while CI is pending or failing. After it succeeds:
 
-`npm version` updates `package.json` and `package-lock.json`, creates the version commit, and creates the matching `v<version>` tag. Review the commit and tag before pushing them. The tag push triggers `.github/workflows/release.yml`; a push to `main` alone does not create a release.
+```bash
+git tag -a v0.2.1 -m "Project Chronicle v0.2.1"
+git push origin v0.2.1
+```
 
-The clean Ubuntu runner validates the tag against `package.json`, rejects existing releases, installs from the lockfile, audits production dependencies, runs `release:check`, packs and inspects the package, generates `SHA256SUMS.txt`, and publishes both assets through the built-in `GITHUB_TOKEN`. Repository maintainers can see [CHRONICLE_WORKFLOWS.md](https://github.com/Programmercloud-cmd/AI_Chronicle_UI/blob/main/CHRONICLE_WORKFLOWS.md) for the exact procedures and the one-time repository setting.
+A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version. Substitute `minor` or `major` in the version command and use the resulting version consistently in the commit and annotated tag.
+
+`npm version --no-git-tag-version` updates `package.json` and `package-lock.json` without creating a commit or tag. This prevents a stale local release tag when the version commit needs repair. A tag push triggers `.github/workflows/release.yml`; a push to `main` alone does not create a release.
+
+The release workflow validates the tag, ancestry, and successful canonical `ci.yml` push run for the exact tagged SHA; repeats `release:check`; then packs, checksums, and publishes through the built-in `GITHUB_TOKEN`. Its least-privilege permissions are `contents: write` and `actions: read`; no personal access token is used. Visual failures upload expected, actual, and diff evidence for review. Repository maintainers can see [CHRONICLE_WORKFLOWS.md](https://github.com/Programmercloud-cmd/AI_Chronicle_UI/blob/main/CHRONICLE_WORKFLOWS.md) for the exact procedures and required repository setting.
 
 Published releases are immutable. Correct a bad release with a new patch version rather than replacing an existing tag or release.
+
+The failed remote `v0.2.0` tag remains untouched and has no GitHub Release. Do not move, recreate, or reuse it; the first corrected release is `v0.2.1` after its untagged version commit passes canonical main CI.
 
 ---
 
