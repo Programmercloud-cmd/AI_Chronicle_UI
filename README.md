@@ -69,9 +69,11 @@ chronicle/
 ├── AGENTS.md
 ├── .gitattributes
 ├── project.yaml
-├── current.yaml
 └── roadmap.yaml
 ```
+
+`current.yaml` is optional. Author it after the first milestone has been
+accepted, when the dataset has a current operational state to summarize.
 
 Record directories such as these may not exist yet:
 
