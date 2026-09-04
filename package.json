@@ -25,8 +25,11 @@
     "dev:web": "vite",
     "test": "vitest run",
     "test:package": "node scripts/package-smoke.mjs",
-    "test:visual": "node scripts/history-visual.mjs",
-    "release:check": "npm run check && npm run test:visual && npm run test:package",
+    "test:visual": "node scripts/canonical-environment.mjs visual",
+    "test:visual:inner": "node scripts/history-visual.mjs",
+    "test:visual:update": "node scripts/canonical-environment.mjs visual-update",
+    "release:check": "node scripts/canonical-environment.mjs release",
+    "release:check:inner": "node scripts/canonical-environment.mjs assert && npm run check && npm run test:visual:inner && npm run test:package",
     "schema:generate": "node scripts/schema-types.mjs --write",
     "schema:check": "node scripts/schema-types.mjs --check",
     "check": "npm run schema:check && npm run build && npm test"
@@ -44,7 +47,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.5",

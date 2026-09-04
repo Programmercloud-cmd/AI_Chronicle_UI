@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { resizeChromiumViewport } from "./browser-viewport.js";
 
 interface RenderedHistoryPose {
   readonly centerX: number;
@@ -150,7 +151,7 @@ test("packaged fullscreen, neighborhood, mixed Back, and camera-session flow sta
     expect(enteredPose.centerY).toBeCloseTo(manualPose.centerY, 10);
     expect(enteredPose.scale).toBeCloseTo(manualPose.scale * enteredFramingFactor, 10);
 
-    await page.setViewportSize({ width: 1280, height: 800 });
+    await resizeChromiumViewport(page, 1280, 800);
     await expect.poll(() => surface.evaluate((element) => document.fullscreenElement === element)).toBe(true);
     await expect.poll(() => surface.evaluate((element) => [element.clientWidth, element.clientHeight])).toEqual([1280, 800]);
     const resizedSurfaceBox = await surface.boundingBox();

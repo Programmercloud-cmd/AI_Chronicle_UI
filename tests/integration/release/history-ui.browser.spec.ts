@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { resizeChromiumViewport } from "./browser-viewport.js";
 
 interface HistoryPose {
   readonly centerX: number;
@@ -182,7 +183,7 @@ test("packaged History hover and repeated-fullscreen camera flow stays bounded",
   const surface = page.getByLabel("Navigable project history timeline");
   const canvas = page.locator(".history-canvas");
   const minimap = page.getByRole("img", { name: "Project history overview minimap" });
-  await expect(surface).toBeVisible();
+  await expect(surface).toBeVisible({ timeout: 15_000 });
   await expect(minimap).toBeVisible();
   test.skip(!(await page.evaluate(() => document.fullscreenEnabled)), "Native fullscreen unavailable in runner");
 
@@ -228,7 +229,7 @@ test("packaged History hover and repeated-fullscreen camera flow stays bounded",
   expect(firstEntry.scale).toBeCloseTo(firstPreview.scale * firstFactor, 8);
   await expect(minimap).toBeVisible();
 
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await resizeChromiumViewport(page, 1280, 800);
   await expect.poll(() => surface.evaluate((element) => [element.clientWidth, element.clientHeight])).toEqual([1280, 800]);
   const resizedFullscreenSurface = await surface.boundingBox();
   if (resizedFullscreenSurface === null) throw new Error("Resized fullscreen surface has no browser bounds");
@@ -262,7 +263,7 @@ test("packaged History hover and repeated-fullscreen camera flow stays bounded",
 
   const normalSurfaceBeforeResize = await surface.boundingBox();
   if (normalSurfaceBeforeResize === null) throw new Error("Restored History surface has no browser bounds");
-  await page.setViewportSize({ width: 1000, height: 760 });
+  await resizeChromiumViewport(page, 1000, 760);
   await expect.poll(async () => (await surface.boundingBox())?.width).not.toBeCloseTo(normalSurfaceBeforeResize.width, 1);
   const secondPreviewSurface = await surface.boundingBox();
   if (secondPreviewSurface === null) throw new Error("Second preview surface has no browser bounds");
