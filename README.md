@@ -201,7 +201,7 @@ For ordinary backward-compatible releases, a consumer installs the new package g
 Example:
 
 ```bash
-npm install -g /path/to/project-chronicle-0.2.0.tgz
+npm install -g /path/to/project-chronicle-<version>.tgz
 
 cd /path/to/my-project
 chronicle validate ./chronicle
@@ -274,13 +274,11 @@ The package contains the runtime and initialization assets needed by consumers. 
 The intended development and distribution flow is:
 
 ```text
-feature branch
+feature / release branch (including untagged version commit)
     ↓
 canonical PR review / tests
     ↓
 main
-    ↓
-untagged version commit
     ↓
 successful canonical main CI for the exact commit
     ↓
@@ -293,29 +291,41 @@ project-chronicle-<version>.tgz
 consumer installs globally
 ```
 
-Release only from an accepted `main` commit and a clean working tree. For a patch release:
+Release only from an accepted `main` commit and a clean working tree. Replace `<next-version>` below with the intended version. A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version. Prepare a new version on a release branch:
 
 ```bash
-git checkout main
+git switch main
 git pull --ff-only
+git switch -c "release/v<next-version>"
 
 npm ci
+npm version "<next-version>" --no-git-tag-version
 npm run release:check
 
-npm version patch --no-git-tag-version
 git add package.json package-lock.json
-git commit -m "chore(release): v0.2.1"
-git push origin main
+git commit -m "chore(release): v<next-version>"
+git push -u origin "release/v<next-version>"
 ```
 
-Wait for the `Canonical release gate` job in `.github/workflows/ci.yml` to succeed for that exact version-commit SHA. Do not create a local tag while CI is pending or failing. After it succeeds:
+Open a pull request to `main`, obtain review and a successful required `Canonical release gate`, then merge using a normal repository-supported method. If Docker is unavailable locally, rely on that required canonical PR gate. If the intended version is already in both manifests on `main`, do not bump it again; continue with the main checks below.
+
+After the merge, update local `main` and record its exact SHA:
 
 ```bash
-git tag -a v0.2.1 -m "Project Chronicle v0.2.1"
-git push origin v0.2.1
+git switch main
+git pull --ff-only
+git status --short
+git rev-parse HEAD
 ```
 
-A bug fix normally receives a patch version; a backward-compatible feature normally receives a minor version. Substitute `minor` or `major` in the version command and use the resulting version consistently in the commit and annotated tag.
+Require a clean working tree, matching intended versions in both manifests, and a successful **push-triggered** `Canonical release gate` in `.github/workflows/ci.yml` for that exact `main` SHA. A green PR run is not sufficient. Do not create a local tag while main CI is pending or failing; make any repairs through a new PR and repeat these checks. Confirm that neither the intended tag nor its GitHub Release already exists. Then create the annotated tag on that exact green commit, verify its peeled SHA equals `HEAD`, and push:
+
+```bash
+git tag -a "v<next-version>" -m "Project Chronicle v<next-version>"
+git rev-parse "v<next-version>^{}"
+git rev-parse HEAD
+git push origin "v<next-version>"
+```
 
 `npm version --no-git-tag-version` updates `package.json` and `package-lock.json` without creating a commit or tag. This prevents a stale local release tag when the version commit needs repair. A tag push triggers `.github/workflows/release.yml`; a push to `main` alone does not create a release.
 
@@ -323,7 +333,7 @@ The release workflow validates the tag, ancestry, and successful canonical `ci.y
 
 Published releases are immutable. Correct a bad release with a new patch version rather than replacing an existing tag or release.
 
-The failed remote `v0.2.0` tag remains untouched and has no GitHub Release. Do not move, recreate, or reuse it; the first corrected release is `v0.2.1` after its untagged version commit passes canonical main CI.
+`v0.2.0` was the failed first release attempt and remains an unpublished tag. The first corrected release is `v0.2.1`. Keep `v0.2.0` untouched; do not move, delete/recreate, or reuse it.
 
 ---
 
